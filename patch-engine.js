@@ -1,7 +1,6 @@
 /**
- * patch-engine.js — Translucid OpenCode Engine (Permanent Dark Mode & 120 FPS Edition)
- * Garante 100% que o OpenCode permaneça SEMPRE no Modo Escuro (Dark Mode Fixo),
- * independente se o macOS estiver no Modo Claro ou Escuro.
+ * patch-engine.js — Translucid OpenCode Engine (ESM Safe + Permanent Dark Mode Edition)
+ * Injeta Liquid Glass, 120 FPS ProMotion e trava de Dark Mode 100% compatível com ES Modules.
  */
 const fs = require('fs');
 const path = require('path');
@@ -13,7 +12,7 @@ if (!targetDir || !fs.existsSync(targetDir)) {
   process.exit(1);
 }
 
-console.log('⚡ Injetando Modo Escuro Permanente + Liquid Glass 120 FPS em:', targetDir);
+console.log('⚡ Injetando Modo Escuro Permanente ESM-Safe + Liquid Glass em:', targetDir);
 
 // =========================================================================
 // 1. out/renderer/assets/main-DxX1DkV8.js (Definição de Fontes Padrão Pro)
@@ -210,15 +209,21 @@ if (fs.existsSync(preloadJsPath)) {
 }
 
 // =========================================================================
-// 4. out/main/index.js (Electron NativeTheme Dark Lock)
+// 4. out/main/index.js (Electron ESM NativeTheme Dark Lock)
 // =========================================================================
 const mainJsPath = path.join(targetDir, 'out/main/index.js');
 if (fs.existsSync(mainJsPath)) {
   let mainJs = fs.readFileSync(mainJsPath, 'utf8');
 
-  // Força nativeTheme.themeSource = "dark"
-  if (!mainJs.includes('nativeTheme.themeSource = "dark"')) {
-    mainJs = `const { nativeTheme: _nativeTheme } = require("electron");\ntry { _nativeTheme.themeSource = "dark"; } catch(e){}\n` + mainJs;
+  // Remove qualquer require indevido anterior
+  mainJs = mainJs.replace(/const \{ nativeTheme: _nativeTheme \} = require\("electron"\);[\s\S]*?\n/, '');
+
+  // Insere a trava de nativeTheme via ESM seguro
+  if (!mainJs.includes('nativeTheme.themeSource = "dark";')) {
+    mainJs = mainJs.replace(
+      /import electron, \{([\s\S]*?)\} from "electron";/,
+      `import electron, { $1 } from "electron";\ntry { nativeTheme.themeSource = "dark"; } catch(e) {}`
+    );
   }
 
   mainJs = mainJs.replace(
@@ -272,7 +277,7 @@ if (fs.existsSync(mainJsPath)) {
   );
 
   fs.writeFileSync(mainJsPath, mainJs, 'utf8');
-  console.log('✅ out/main/index.js configurado com nativeTheme dark.');
+  console.log('✅ out/main/index.js configurado com nativeTheme dark ESM-Safe.');
 }
 
 console.log('🎉 OpenCode travado no Modo Escuro Permanente com sucesso!');
