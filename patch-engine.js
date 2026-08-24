@@ -1,7 +1,7 @@
 /**
- * patch-engine.js — Translucid OpenCode Engine (Chromatic Liquid Glass Edition)
- * Amplifica as cores e a intensidade de cada tema interno (roxo profundo, azul cobalto,
- * verde matrix, neon synthwave), mantendo a transparência de vidro e legibilidade máxima.
+ * patch-engine.js — Translucid OpenCode Universal Dynamic Engine
+ * Motor de injeção 100% dinâmico e resiliente a qualquer atualização futura do OpenCode.
+ * Preserva os bundles originais do Vite (hashes dinâmicos) e injeta Liquid Glass + Pro Fonts.
  */
 const fs = require('fs');
 const path = require('path');
@@ -13,46 +13,47 @@ if (!targetDir || !fs.existsSync(targetDir)) {
   process.exit(1);
 }
 
-console.log('⚡ Injetando Vidro Cromático com Cores Amplificadas em:', targetDir);
+console.log('⚡ Iniciando injeção Dinâmica Universal em:', targetDir);
 
 // =========================================================================
-// 1. out/renderer/assets/main-DxX1DkV8.js (Fontes Pro Fira Code + SF Pro)
+// 1. Localizar dinamicamente o bundle principal do Vite (assets/main-*.js)
 // =========================================================================
-const mainRendererJsPath = path.join(targetDir, 'out/renderer/assets/main-DxX1DkV8.js');
-if (fs.existsSync(mainRendererJsPath)) {
-  let rJs = fs.readFileSync(mainRendererJsPath, 'utf8');
-  rJs = rJs.replace(/const monoDefault\s*=\s*"System Mono";/, 'const monoDefault = "Fira Code";');
-  rJs = rJs.replace(/const sansDefault\s*=\s*"System Sans";/, 'const sansDefault = "SF Pro Display";');
-  rJs = rJs.replace(/const terminalDefault\s*=\s*"JetBrainsMono Nerd Font Mono";/, 'const terminalDefault = "JetBrainsMono Nerd Font";');
-  fs.writeFileSync(mainRendererJsPath, rJs, 'utf8');
-  console.log('✅ main-DxX1DkV8.js configurado com Fira Code e SF Pro Display.');
+const assetsDir = path.join(targetDir, 'out/renderer/assets');
+if (fs.existsSync(assetsDir)) {
+  const files = fs.readdirSync(assetsDir);
+  const mainJsFile = files.find(f => f.startsWith('main-') && f.endsWith('.js'));
+  if (mainJsFile) {
+    const mainJsPath = path.join(assetsDir, mainJsFile);
+    let rJs = fs.readFileSync(mainJsPath, 'utf8');
+    rJs = rJs.replace(/const monoDefault\s*=\s*"System Mono";/, 'const monoDefault = "Fira Code";');
+    rJs = rJs.replace(/const sansDefault\s*=\s*"System Sans";/, 'const sansDefault = "SF Pro Display";');
+    rJs = rJs.replace(/const terminalDefault\s*=\s*"JetBrainsMono Nerd Font Mono";/, 'const terminalDefault = "JetBrainsMono Nerd Font";');
+    fs.writeFileSync(mainJsPath, rJs, 'utf8');
+    console.log(`✅ Bundle dinâmico (${mainJsFile}) configurado com Fontes Pro.`);
+  }
 }
 
 // =========================================================================
-// 2. out/renderer/index.html (Chromatic Liquid Glass & Amplificação de Cores)
+// 2. Modificar out/renderer/index.html PRESERVANDO scripts e hashes originais
 // =========================================================================
 const htmlPath = path.join(targetDir, 'out/renderer/index.html');
 if (fs.existsSync(htmlPath)) {
-  const htmlContent = `<!doctype html>
-<html lang="en" class="dark" data-color-scheme="dark" style="background-color: transparent !important; background: transparent !important; color-scheme: dark !important;">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>OpenCode</title>
-    <link rel="icon" type="image/png" href="./favicon-96x96-v3.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="./favicon-v3.svg" />
-    <link rel="shortcut icon" href="./favicon-v3.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-v3.png" />
-    <meta name="theme-color" content="#00000000" />
-    <script id="oc-theme-preload-script" src="./oc-theme-preload.js"></script>
-    <script type="module" crossorigin src="./assets/main-DxX1DkV8.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/main-CIkHDf4N.css">
+  let html = fs.readFileSync(htmlPath, 'utf8');
+
+  // Remove injeção anterior se já existir
+  html = html.replace(/<style id="translucid-opencode-glass">[\s\S]*?<\/style>/g, '');
+
+  // Força atributos dark e transparência na tag html e body
+  html = html.replace(/<html([^>]*)>/i, '<html$1 class="dark" data-color-scheme="dark" style="background-color: transparent !important; background: transparent !important; color-scheme: dark !important;">');
+  html = html.replace(/<body([^>]*)>/i, '<body$1 class="dark" data-color-scheme="dark" style="background: transparent !important; background-color: transparent !important; color-scheme: dark !important;">');
+
+  const customStyle = `
     <style id="translucid-opencode-glass">
-      /* 🔒 FORÇA MODO ESCURO PERMANENTE */
+      /* 🔒 FORÇA MODO ESCURO PERMANENTE E LIQUID GLASS */
       :root, [data-theme], [data-color-scheme], [data-color-scheme="light"], [data-color-scheme="dark"], .light, .dark, body, html {
         color-scheme: dark !important;
 
-        /* Backgrounds Translúcidos com Matiz Cromática do Tema Ativo */
+        /* Backgrounds Translúcidos */
         --v2-background-bg-base: transparent !important;
         --v2-background-bg-layer-01: transparent !important;
         --v2-background-bg-layer-02: transparent !important;
@@ -72,7 +73,7 @@ if (fs.existsSync(htmlPath)) {
         --surface-inset-base: transparent !important;
         --surface-diff-unchanged-base: transparent !important;
 
-        /* Textos e Contraste Nítido */
+        /* Textos em Branco Puro e Alto Contraste */
         --v2-text-text-base: #ffffff !important;
         --v2-text-text-subtle: #f8fafc !important;
         --v2-text-text-muted: #e2e8f0 !important;
@@ -96,47 +97,34 @@ if (fs.existsSync(htmlPath)) {
         --font-mono: 'Fira Code', 'JetBrainsMono Nerd Font', 'Monaspace Neon', 'SF Mono', monospace !important;
       }
 
-      /* ========================================================= */
-      /* 🎨 MATIZES CROMÁTICAS ESPECÍFICAS DE CADA TEMA NO VIDRO    */
-      /* ========================================================= */
-
-      /* 💜 Temas Roxos & Violetas (Shades of Purple, Dracula, Aura, Rose Pine) */
+      /* 🎨 MATIZES CROMÁTICAS DE CADA TEMA NO VIDRO */
       [data-theme*="purple"], [data-theme*="dracula"], [data-theme*="aura"], [data-theme*="rosepine"] {
         --theme-tint-overlay: linear-gradient(135deg, rgba(147, 51, 234, 0.22) 0%, rgba(88, 28, 135, 0.14) 50%, rgba(15, 12, 28, 0.35) 100%) !important;
         --theme-border-glow: rgba(192, 132, 252, 0.40) !important;
       }
-
-      /* 💙 Temas Azuis & Índigo (Tokyo Night, Cobalt2, Nord, One Dark) */
       [data-theme*="tokyonight"], [data-theme*="cobalt"], [data-theme*="nord"], [data-theme*="one-dark"] {
         --theme-tint-overlay: linear-gradient(135deg, rgba(37, 99, 235, 0.22) 0%, rgba(29, 78, 216, 0.14) 50%, rgba(10, 18, 32, 0.35) 100%) !important;
         --theme-border-glow: rgba(147, 197, 253, 0.40) !important;
       }
-
-      /* 💚 Temas Verdes & Esmeralda (Matrix, Osaka Jade, Everforest) */
       [data-theme*="matrix"], [data-theme*="jade"], [data-theme*="everforest"] {
         --theme-tint-overlay: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.14) 50%, rgba(8, 24, 18, 0.35) 100%) !important;
         --theme-border-glow: rgba(110, 231, 183, 0.40) !important;
       }
-
-      /* 💖 Temas Synthwave, Cyberpunk & Catppuccin */
       [data-theme*="synthwave"], [data-theme*="catppuccin"], [data-theme*="cyberpunk"] {
         --theme-tint-overlay: linear-gradient(135deg, rgba(236, 72, 153, 0.24) 0%, rgba(139, 92, 246, 0.18) 50%, rgba(18, 12, 26, 0.35) 100%) !important;
         --theme-border-glow: rgba(244, 114, 182, 0.45) !important;
       }
-
-      /* 🧡 Temas Âmbar, Laranja e Gruvbox */
       [data-theme*="orng"], [data-theme*="gruvbox"], [data-theme*="solarized"], [data-theme*="monokai"] {
         --theme-tint-overlay: linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.14) 50%, rgba(26, 18, 10, 0.35) 100%) !important;
         --theme-border-glow: rgba(252, 211, 77, 0.40) !important;
       }
 
-      /* Aplicação do Vidro Cromático na Raiz */
       #root {
         background: var(--theme-tint-overlay, rgba(10, 12, 18, 0.30)) !important;
         transform: translateZ(0);
       }
 
-      /* ⚡ AMPLIFICAÇÃO DE SATURAÇÃO E CONTRASTE DE TODAS AS CORES DE SINTAXE */
+      /* ⚡ SINTAXE E CÓDIGO COM ALTO CONTRASTE */
       code, pre, [data-component*="code"], [class*="font-mono"], .monaco-editor, .xterm, [class*="syntax-"], [class*="token"] {
         font-family: 'Fira Code', 'Monaspace Neon', 'JetBrainsMono Nerd Font', monospace !important;
         font-variant-ligatures: contextual !important;
@@ -168,7 +156,6 @@ if (fs.existsSync(htmlPath)) {
         background-color: transparent !important;
       }
 
-      /* Inputs, Caixas de Prompt e Painéis com Borda Iluminada pelo Tema */
       [data-component="text-input-v2"], 
       [data-component="settings-v2-list"],
       textarea, input, [contenteditable="true"], select {
@@ -190,7 +177,6 @@ if (fs.existsSync(htmlPath)) {
         transform: translateZ(0);
       }
 
-      /* Logo e Título com Glow da Cor do Tema */
       h1, [class*="logo"], [class*="hero-title"] {
         color: #ffffff !important;
         font-weight: 800 !important;
@@ -198,7 +184,6 @@ if (fs.existsSync(htmlPath)) {
         text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 25px var(--theme-border-glow, rgba(255, 255, 255, 0.35)) !important;
       }
 
-      /* Botões com Efeito Hover Acentuado */
       [data-component="button-v2"], button {
         color: #ffffff !important;
         border-color: rgba(255, 255, 255, 0.20) !important;
@@ -218,14 +203,11 @@ if (fs.existsSync(htmlPath)) {
         transform: translateZ(0);
       }
     </style>
-  </head>
-  <body class="dark antialiased overscroll-none text-12-regular overflow-hidden" data-color-scheme="dark" style="background: transparent !important; background-color: transparent !important; color-scheme: dark !important;">
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root" class="flex flex-col h-dvh" style="background: transparent !important; background-color: transparent !important;"></div>
-  </body>
-</html>`;
-  fs.writeFileSync(htmlPath, htmlContent, 'utf8');
-  console.log('✅ out/renderer/index.html atualizado com Vidro Cromático e Cores Amplificadas.');
+  `;
+
+  html = html.replace('</head>', `${customStyle}\n</head>`);
+  fs.writeFileSync(htmlPath, html, 'utf8');
+  console.log('✅ out/renderer/index.html preservado com injeção não-destrutiva.');
 }
 
 // =========================================================================
@@ -252,14 +234,13 @@ if (fs.existsSync(preloadJsPath)) {
 }
 
 // =========================================================================
-// 4. out/main/index.js (Electron ESM NativeTheme Dark Lock)
+// 4. out/main/index.js (Electron ESM NativeTheme & Transparência)
 // =========================================================================
 const mainJsPath = path.join(targetDir, 'out/main/index.js');
 if (fs.existsSync(mainJsPath)) {
   let mainJs = fs.readFileSync(mainJsPath, 'utf8');
 
-  mainJs = mainJs.replace(/const \{ nativeTheme: _nativeTheme \} = require\("electron"\);[\s\S]*?\n/, '');
-
+  // ESM safe nativeTheme
   if (!mainJs.includes('nativeTheme.themeSource = "dark";')) {
     mainJs = mainJs.replace(
       /import electron, \{([\s\S]*?)\} from "electron";/,
@@ -321,4 +302,4 @@ if (fs.existsSync(mainJsPath)) {
   console.log('✅ out/main/index.js configurado.');
 }
 
-console.log('🎉 Vidro Cromático com Cores Amplificadas aplicado com sucesso!');
+console.log('🎉 Injeção Dinâmica Universal concluída com sucesso!');
