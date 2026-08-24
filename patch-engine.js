@@ -1,6 +1,6 @@
 /**
- * patch-engine.js — Translucid OpenCode Engine (High Contrast Edition)
- * Motor de injeção de Liquid Glass, Alto Contraste de Branco e Fontes Pro
+ * patch-engine.js — Translucid OpenCode Engine (Ultra-Contrast + Pro Fonts Edition)
+ * Injeta Liquid Glass, Alto Contraste na Home, Fira Code Ligatures e SF Pro Typography
  */
 const fs = require('fs');
 const path = require('path');
@@ -12,10 +12,23 @@ if (!targetDir || !fs.existsSync(targetDir)) {
   process.exit(1);
 }
 
-console.log('⚡ Iniciando injeção de Transparência Líquida + Alto Contraste em:', targetDir);
+console.log('⚡ Iniciando injeção de Liquid Glass, Pro Fonts e Alto Contraste na Home em:', targetDir);
 
 // =========================================================================
-// 1. out/renderer/index.html (Injeção de CSS de Transparência + Alto Contraste)
+// 1. out/renderer/assets/main-DxX1DkV8.js (Definição de Fontes Padrão Pro)
+// =========================================================================
+const mainRendererJsPath = path.join(targetDir, 'out/renderer/assets/main-DxX1DkV8.js');
+if (fs.existsSync(mainRendererJsPath)) {
+  let rJs = fs.readFileSync(mainRendererJsPath, 'utf8');
+  rJs = rJs.replace(/const monoDefault\s*=\s*"System Mono";/, 'const monoDefault = "Fira Code";');
+  rJs = rJs.replace(/const sansDefault\s*=\s*"System Sans";/, 'const sansDefault = "SF Pro Display";');
+  rJs = rJs.replace(/const terminalDefault\s*=\s*"JetBrainsMono Nerd Font Mono";/, 'const terminalDefault = "JetBrainsMono Nerd Font";');
+  fs.writeFileSync(mainRendererJsPath, rJs, 'utf8');
+  console.log('✅ main-DxX1DkV8.js configurado com Fira Code e SF Pro Display como padrão.');
+}
+
+// =========================================================================
+// 2. out/renderer/index.html (Estilos Liquid Glass, Alto Contraste & Home Glow)
 // =========================================================================
 const htmlPath = path.join(targetDir, 'out/renderer/index.html');
 if (fs.existsSync(htmlPath)) {
@@ -57,33 +70,46 @@ if (fs.existsSync(htmlPath)) {
 
         /* Alto Contraste de Branco Nítido nos Textos */
         --v2-text-text-base: #ffffff !important;
-        --v2-text-text-subtle: #f1f5f9 !important;
-        --v2-text-text-muted: #cbd5e1 !important;
+        --v2-text-text-subtle: #f8fafc !important;
+        --v2-text-text-muted: #e2e8f0 !important;
         --text-base: #ffffff !important;
         --text-strong: #ffffff !important;
         --text-stronger: #ffffff !important;
-        --text-weak: #f1f5f9 !important;
-        --text-weaker: #cbd5e1 !important;
+        --text-weak: #f8fafc !important;
+        --text-weaker: #e2e8f0 !important;
         --icon-base: #ffffff !important;
         --icon-strong: #ffffff !important;
 
         /* Bordas Definidas */
-        --v2-border-border-base: rgba(255, 255, 255, 0.18) !important;
-        --v2-border-border-muted: rgba(255, 255, 255, 0.12) !important;
-        --border-weak-base: rgba(255, 255, 255, 0.12) !important;
-        --border-base: rgba(255, 255, 255, 0.18) !important;
-        --border-strong-base: rgba(255, 255, 255, 0.28) !important;
+        --v2-border-border-base: rgba(255, 255, 255, 0.22) !important;
+        --v2-border-border-muted: rgba(255, 255, 255, 0.14) !important;
+        --border-weak-base: rgba(255, 255, 255, 0.14) !important;
+        --border-base: rgba(255, 255, 255, 0.22) !important;
+        --border-strong-base: rgba(255, 255, 255, 0.32) !important;
+
+        /* Fontes Pro */
+        --font-sans: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif !important;
+        --font-mono: 'Fira Code', 'JetBrainsMono Nerd Font', 'Monaspace Neon', 'SF Mono', monospace !important;
       }
 
-      /* Tipografia com sombra nítida contra fundos claros ou escuros */
+      /* Tipografia com sombra suave de alto relevo */
       body, p, span, h1, h2, h3, h4, h5, h6, label, button, a, div {
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.70);
       }
 
       html, body {
         background: transparent !important;
         background-color: transparent !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Ligaduras e Renderização de Código Pro */
+      code, pre, [data-component*="code"], [class*="font-mono"], .monaco-editor, .xterm {
+        font-family: 'Fira Code', 'Monaspace Neon', 'JetBrainsMono Nerd Font', monospace !important;
+        font-variant-ligatures: contextual !important;
+        font-feature-settings: "calt" 1, "liga" 1, "zero" 1, "ss01" 1, "ss02" 1 !important;
+        letter-spacing: -0.01em;
       }
 
       #root {
@@ -103,29 +129,55 @@ if (fs.existsSync(htmlPath)) {
         background-color: transparent !important;
       }
 
-      /* Inputs, Dropdowns e Seletores com acabamento de vidro de alto contraste */
+      /* ========================================================= */
+      /* HOME & CAIXA DE PROMPT COM ALTO CONTRASTE PREMIUM         */
+      /* ========================================================= */
       [data-component="text-input-v2"], 
       [data-component="settings-v2-list"],
       textarea, input, [contenteditable="true"], select {
-        background-color: rgba(0, 0, 0, 0.35) !important;
-        border: 1px solid rgba(255, 255, 255, 0.22) !important;
-        backdrop-filter: blur(16px) !important;
-        -webkit-backdrop-filter: blur(16px) !important;
+        background-color: rgba(10, 14, 22, 0.45) !important;
+        border: 1px solid rgba(255, 255, 255, 0.28) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
         color: #ffffff !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+        border-radius: 10px !important;
       }
 
-      /* Botões de Alto Contraste */
+      /* Prompt Box Principal na Home */
+      form [data-component="text-input-v2"],
+      form textarea,
+      [class*="prompt-box"],
+      [class*="chat-input"] {
+        background-color: rgba(8, 10, 16, 0.55) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.20) !important;
+      }
+
+      /* Logo e Títulos da Home */
+      h1, [class*="logo"], [class*="hero-title"] {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.03em !important;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 255, 255, 0.25) !important;
+      }
+
+      /* Botões e Badges com Contraste Vivo */
       [data-component="button-v2"], button {
         color: #ffffff !important;
+        border-color: rgba(255, 255, 255, 0.20) !important;
+      }
+      button:hover {
+        background-color: rgba(255, 255, 255, 0.12) !important;
+        border-color: rgba(255, 255, 255, 0.35) !important;
       }
 
       /* Diálogos modais / Popovers */
       dialog, [role="dialog"], [class*="modal"], [class*="popover"] {
-        background: rgba(10, 12, 18, 0.55) !important;
-        backdrop-filter: blur(35px) saturate(190%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.25) !important;
-        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6) !important;
+        background: rgba(10, 12, 18, 0.65) !important;
+        backdrop-filter: blur(40px) saturate(190%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.28) !important;
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.70) !important;
       }
     </style>
   </head>
@@ -135,11 +187,11 @@ if (fs.existsSync(htmlPath)) {
   </body>
 </html>`;
   fs.writeFileSync(htmlPath, htmlContent, 'utf8');
-  console.log('✅ out/renderer/index.html reescrito com Alto Contraste.');
+  console.log('✅ out/renderer/index.html reescrito com Alto Contraste na Home e Pro Fonts.');
 }
 
 // =========================================================================
-// 2. out/renderer/oc-theme-preload.js
+// 3. out/renderer/oc-theme-preload.js
 // =========================================================================
 const preloadJsPath = path.join(targetDir, 'out/renderer/oc-theme-preload.js');
 if (fs.existsSync(preloadJsPath)) {
@@ -159,7 +211,7 @@ if (fs.existsSync(preloadJsPath)) {
 }
 
 // =========================================================================
-// 3. out/main/index.js
+// 4. out/main/index.js
 // =========================================================================
 const mainJsPath = path.join(targetDir, 'out/main/index.js');
 if (fs.existsSync(mainJsPath)) {
@@ -219,4 +271,4 @@ if (fs.existsSync(mainJsPath)) {
   console.log('✅ out/main/index.js configurado.');
 }
 
-console.log('🎉 Patch de Alto Contraste de Branco aplicado com sucesso!');
+console.log('🎉 Patch Pro Fonts + Home High Contrast aplicado com sucesso!');
