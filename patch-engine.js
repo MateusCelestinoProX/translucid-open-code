@@ -1,6 +1,7 @@
 /**
- * patch-engine.js — Translucid OpenCode Engine (ESM Safe + Permanent Dark Mode Edition)
- * Injeta Liquid Glass, 120 FPS ProMotion e trava de Dark Mode 100% compatível com ES Modules.
+ * patch-engine.js — Translucid OpenCode Engine (Chromatic Liquid Glass Edition)
+ * Amplifica as cores e a intensidade de cada tema interno (roxo profundo, azul cobalto,
+ * verde matrix, neon synthwave), mantendo a transparência de vidro e legibilidade máxima.
  */
 const fs = require('fs');
 const path = require('path');
@@ -12,10 +13,10 @@ if (!targetDir || !fs.existsSync(targetDir)) {
   process.exit(1);
 }
 
-console.log('⚡ Injetando Modo Escuro Permanente ESM-Safe + Liquid Glass em:', targetDir);
+console.log('⚡ Injetando Vidro Cromático com Cores Amplificadas em:', targetDir);
 
 // =========================================================================
-// 1. out/renderer/assets/main-DxX1DkV8.js (Definição de Fontes Padrão Pro)
+// 1. out/renderer/assets/main-DxX1DkV8.js (Fontes Pro Fira Code + SF Pro)
 // =========================================================================
 const mainRendererJsPath = path.join(targetDir, 'out/renderer/assets/main-DxX1DkV8.js');
 if (fs.existsSync(mainRendererJsPath)) {
@@ -28,7 +29,7 @@ if (fs.existsSync(mainRendererJsPath)) {
 }
 
 // =========================================================================
-// 2. out/renderer/index.html (Estilos 120 FPS + Trava Permanente no Dark Mode)
+// 2. out/renderer/index.html (Chromatic Liquid Glass & Amplificação de Cores)
 // =========================================================================
 const htmlPath = path.join(targetDir, 'out/renderer/index.html');
 if (fs.existsSync(htmlPath)) {
@@ -47,11 +48,11 @@ if (fs.existsSync(htmlPath)) {
     <script type="module" crossorigin src="./assets/main-DxX1DkV8.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/main-CIkHDf4N.css">
     <style id="translucid-opencode-glass">
-      /* 🔒 FORÇA MODO ESCURO PERMANENTE EM QUALQUER CENÁRIO */
+      /* 🔒 FORÇA MODO ESCURO PERMANENTE */
       :root, [data-theme], [data-color-scheme], [data-color-scheme="light"], [data-color-scheme="dark"], .light, .dark, body, html {
         color-scheme: dark !important;
 
-        /* Fundo Totalmente Translúcido */
+        /* Backgrounds Translúcidos com Matiz Cromática do Tema Ativo */
         --v2-background-bg-base: transparent !important;
         --v2-background-bg-layer-01: transparent !important;
         --v2-background-bg-layer-02: transparent !important;
@@ -71,7 +72,7 @@ if (fs.existsSync(htmlPath)) {
         --surface-inset-base: transparent !important;
         --surface-diff-unchanged-base: transparent !important;
 
-        /* Textos em Branco Puro e Alto Contraste */
+        /* Textos e Contraste Nítido */
         --v2-text-text-base: #ffffff !important;
         --v2-text-text-subtle: #f8fafc !important;
         --v2-text-text-muted: #e2e8f0 !important;
@@ -83,7 +84,7 @@ if (fs.existsSync(htmlPath)) {
         --icon-base: #ffffff !important;
         --icon-strong: #ffffff !important;
 
-        /* Bordas Definidas */
+        /* Bordas de Cristal */
         --v2-border-border-base: rgba(255, 255, 255, 0.22) !important;
         --v2-border-border-muted: rgba(255, 255, 255, 0.14) !important;
         --border-weak-base: rgba(255, 255, 255, 0.14) !important;
@@ -95,8 +96,57 @@ if (fs.existsSync(htmlPath)) {
         --font-mono: 'Fira Code', 'JetBrainsMono Nerd Font', 'Monaspace Neon', 'SF Mono', monospace !important;
       }
 
+      /* ========================================================= */
+      /* 🎨 MATIZES CROMÁTICAS ESPECÍFICAS DE CADA TEMA NO VIDRO    */
+      /* ========================================================= */
+
+      /* 💜 Temas Roxos & Violetas (Shades of Purple, Dracula, Aura, Rose Pine) */
+      [data-theme*="purple"], [data-theme*="dracula"], [data-theme*="aura"], [data-theme*="rosepine"] {
+        --theme-tint-overlay: linear-gradient(135deg, rgba(147, 51, 234, 0.22) 0%, rgba(88, 28, 135, 0.14) 50%, rgba(15, 12, 28, 0.35) 100%) !important;
+        --theme-border-glow: rgba(192, 132, 252, 0.40) !important;
+      }
+
+      /* 💙 Temas Azuis & Índigo (Tokyo Night, Cobalt2, Nord, One Dark) */
+      [data-theme*="tokyonight"], [data-theme*="cobalt"], [data-theme*="nord"], [data-theme*="one-dark"] {
+        --theme-tint-overlay: linear-gradient(135deg, rgba(37, 99, 235, 0.22) 0%, rgba(29, 78, 216, 0.14) 50%, rgba(10, 18, 32, 0.35) 100%) !important;
+        --theme-border-glow: rgba(147, 197, 253, 0.40) !important;
+      }
+
+      /* 💚 Temas Verdes & Esmeralda (Matrix, Osaka Jade, Everforest) */
+      [data-theme*="matrix"], [data-theme*="jade"], [data-theme*="everforest"] {
+        --theme-tint-overlay: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.14) 50%, rgba(8, 24, 18, 0.35) 100%) !important;
+        --theme-border-glow: rgba(110, 231, 183, 0.40) !important;
+      }
+
+      /* 💖 Temas Synthwave, Cyberpunk & Catppuccin */
+      [data-theme*="synthwave"], [data-theme*="catppuccin"], [data-theme*="cyberpunk"] {
+        --theme-tint-overlay: linear-gradient(135deg, rgba(236, 72, 153, 0.24) 0%, rgba(139, 92, 246, 0.18) 50%, rgba(18, 12, 26, 0.35) 100%) !important;
+        --theme-border-glow: rgba(244, 114, 182, 0.45) !important;
+      }
+
+      /* 🧡 Temas Âmbar, Laranja e Gruvbox */
+      [data-theme*="orng"], [data-theme*="gruvbox"], [data-theme*="solarized"], [data-theme*="monokai"] {
+        --theme-tint-overlay: linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.14) 50%, rgba(26, 18, 10, 0.35) 100%) !important;
+        --theme-border-glow: rgba(252, 211, 77, 0.40) !important;
+      }
+
+      /* Aplicação do Vidro Cromático na Raiz */
+      #root {
+        background: var(--theme-tint-overlay, rgba(10, 12, 18, 0.30)) !important;
+        transform: translateZ(0);
+      }
+
+      /* ⚡ AMPLIFICAÇÃO DE SATURAÇÃO E CONTRASTE DE TODAS AS CORES DE SINTAXE */
+      code, pre, [data-component*="code"], [class*="font-mono"], .monaco-editor, .xterm, [class*="syntax-"], [class*="token"] {
+        font-family: 'Fira Code', 'Monaspace Neon', 'JetBrainsMono Nerd Font', monospace !important;
+        font-variant-ligatures: contextual !important;
+        font-feature-settings: "calt" 1, "liga" 1, "zero" 1, "ss01" 1, "ss02" 1 !important;
+        filter: saturate(155%) contrast(110%) !important;
+        letter-spacing: -0.01em;
+      }
+
       body, p, span, h1, h2, h3, h4, h5, h6, label, button, a, div {
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.70);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
       }
 
       html, body {
@@ -107,34 +157,23 @@ if (fs.existsSync(htmlPath)) {
         text-rendering: optimizeLegibility;
       }
 
-      code, pre, [data-component*="code"], [class*="font-mono"], .monaco-editor, .xterm {
-        font-family: 'Fira Code', 'Monaspace Neon', 'JetBrainsMono Nerd Font', monospace !important;
-        font-variant-ligatures: contextual !important;
-        font-feature-settings: "calt" 1, "liga" 1, "zero" 1, "ss01" 1, "ss02" 1 !important;
-        letter-spacing: -0.01em;
-      }
-
-      #root {
-        background: transparent !important;
-        background-color: transparent !important;
-        transform: translateZ(0);
-      }
-
       main, aside, section, article, nav, header, [data-slot="dialog-container"], .settings-v2-panel {
         background: transparent !important;
         background-color: transparent !important;
         transform: translateZ(0);
       }
+
       [class*="bg-background-"], [class*="bg-zinc-"], [class*="bg-neutral-"], [class*="bg-slate-"], [class*="bg-black"], [class*="bg-[#"] {
         background: transparent !important;
         background-color: transparent !important;
       }
 
+      /* Inputs, Caixas de Prompt e Painéis com Borda Iluminada pelo Tema */
       [data-component="text-input-v2"], 
       [data-component="settings-v2-list"],
       textarea, input, [contenteditable="true"], select {
-        background-color: rgba(10, 14, 22, 0.45) !important;
-        border: 1px solid rgba(255, 255, 255, 0.28) !important;
+        background-color: rgba(10, 14, 22, 0.50) !important;
+        border: 1px solid var(--theme-border-glow, rgba(255, 255, 255, 0.28)) !important;
         color: #ffffff !important;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.40) !important;
         border-radius: 10px !important;
@@ -145,33 +184,36 @@ if (fs.existsSync(htmlPath)) {
       form textarea,
       [class*="prompt-box"],
       [class*="chat-input"] {
-        background-color: rgba(8, 10, 16, 0.55) !important;
-        border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
-        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55) !important;
+        background-color: rgba(8, 10, 16, 0.60) !important;
+        border: 1.5px solid var(--theme-border-glow, rgba(255, 255, 255, 0.35)) !important;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), 0 0 20px var(--theme-border-glow, rgba(255, 255, 255, 0.12)) !important;
         transform: translateZ(0);
       }
 
+      /* Logo e Título com Glow da Cor do Tema */
       h1, [class*="logo"], [class*="hero-title"] {
         color: #ffffff !important;
         font-weight: 800 !important;
         letter-spacing: -0.03em !important;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 255, 255, 0.35) !important;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 25px var(--theme-border-glow, rgba(255, 255, 255, 0.35)) !important;
       }
 
+      /* Botões com Efeito Hover Acentuado */
       [data-component="button-v2"], button {
         color: #ffffff !important;
         border-color: rgba(255, 255, 255, 0.20) !important;
         transform: translateZ(0);
-        transition: background-color 0.15s ease;
+        transition: all 0.15s ease;
       }
       button:hover {
-        background-color: rgba(255, 255, 255, 0.14) !important;
-        border-color: rgba(255, 255, 255, 0.35) !important;
+        background-color: rgba(255, 255, 255, 0.16) !important;
+        border-color: var(--theme-border-glow, rgba(255, 255, 255, 0.45)) !important;
+        box-shadow: 0 0 12px var(--theme-border-glow, rgba(255, 255, 255, 0.20)) !important;
       }
 
       dialog, [role="dialog"], [class*="modal"], [class*="popover"] {
-        background: rgba(10, 12, 18, 0.65) !important;
-        border: 1px solid rgba(255, 255, 255, 0.28) !important;
+        background: rgba(10, 12, 18, 0.70) !important;
+        border: 1px solid var(--theme-border-glow, rgba(255, 255, 255, 0.28)) !important;
         box-shadow: 0 30px 70px rgba(0, 0, 0, 0.70) !important;
         transform: translateZ(0);
       }
@@ -183,21 +225,22 @@ if (fs.existsSync(htmlPath)) {
   </body>
 </html>`;
   fs.writeFileSync(htmlPath, htmlContent, 'utf8');
-  console.log('✅ out/renderer/index.html travado no Modo Escuro Permanente.');
+  console.log('✅ out/renderer/index.html atualizado com Vidro Cromático e Cores Amplificadas.');
 }
 
 // =========================================================================
-// 3. out/renderer/oc-theme-preload.js (Trava Rígida no Tema Dark)
+// 3. out/renderer/oc-theme-preload.js
 // =========================================================================
 const preloadJsPath = path.join(targetDir, 'out/renderer/oc-theme-preload.js');
 if (fs.existsSync(preloadJsPath)) {
   const preloadContent = `;(function () {
+  var key = "opencode-theme-id";
+  var themeId = localStorage.getItem(key) || "oc-2";
   try {
-    localStorage.setItem("opencode-theme-id", "oc-2");
     localStorage.setItem("opencode-color-scheme", "dark");
   } catch (e) {}
 
-  document.documentElement.dataset.theme = "oc-2";
+  document.documentElement.dataset.theme = themeId;
   document.documentElement.dataset.colorScheme = "dark";
   document.documentElement.classList.add("dark");
   document.documentElement.classList.remove("light");
@@ -205,7 +248,7 @@ if (fs.existsSync(preloadJsPath)) {
   document.documentElement.style.colorScheme = "dark";
 })();`;
   fs.writeFileSync(preloadJsPath, preloadContent, 'utf8');
-  console.log('✅ out/renderer/oc-theme-preload.js configurado para Modo Escuro Permanente.');
+  console.log('✅ out/renderer/oc-theme-preload.js configurado.');
 }
 
 // =========================================================================
@@ -215,10 +258,8 @@ const mainJsPath = path.join(targetDir, 'out/main/index.js');
 if (fs.existsSync(mainJsPath)) {
   let mainJs = fs.readFileSync(mainJsPath, 'utf8');
 
-  // Remove qualquer require indevido anterior
   mainJs = mainJs.replace(/const \{ nativeTheme: _nativeTheme \} = require\("electron"\);[\s\S]*?\n/, '');
 
-  // Insere a trava de nativeTheme via ESM seguro
   if (!mainJs.includes('nativeTheme.themeSource = "dark";')) {
     mainJs = mainJs.replace(
       /import electron, \{([\s\S]*?)\} from "electron";/,
@@ -277,7 +318,7 @@ if (fs.existsSync(mainJsPath)) {
   );
 
   fs.writeFileSync(mainJsPath, mainJs, 'utf8');
-  console.log('✅ out/main/index.js configurado com nativeTheme dark ESM-Safe.');
+  console.log('✅ out/main/index.js configurado.');
 }
 
-console.log('🎉 OpenCode travado no Modo Escuro Permanente com sucesso!');
+console.log('🎉 Vidro Cromático com Cores Amplificadas aplicado com sucesso!');
