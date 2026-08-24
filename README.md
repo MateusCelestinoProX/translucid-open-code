@@ -1,54 +1,55 @@
-# 🪟💎 Translucid Suite: OpenCode & OmniRoute
+# 🪟✨ Translucid OpenCode
 
-> Transforme o **OpenCode Desktop**, **OmniRoute Desktop** e qualquer aplicativo **Electron** em uma obra de arte de **Vidro Líquido 100% Translúcido (Liquid Glass & Apple Native Vibrancy)** no macOS.
+> Motor de injeção de **Vidro Líquido Ultra-Translúcido (Pure Liquid Glass & Apple Native Vibrancy)**, aceleração por hardware **120 FPS ProMotion** e tipografia profissional para o **OpenCode Desktop (macOS)**.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform: macOS](https://img.shields.io/badge/Platform-macOS%20(Apple%20Silicon%20%26%20Intel)-black.svg)](https://apple.com)
 [![Electron: Native Glass](https://img.shields.io/badge/Electron-Vibrancy%20%26%20Alpha-emerald.svg)](https://electronjs.org)
-[![Typography: Pro Fonts](https://img.shields.io/badge/Fonts-Fira%20Code%20%7C%20JetBrains%20Mono%20%7C%20Monaspace-purple.svg)](https://github.com/tonsky/FiraCode)
+[![Display: 120 FPS](https://img.shields.io/badge/ProMotion-120%20FPS%20Metal-purple.svg)](https://apple.com)
 
 ---
 
-## 📖 Como Funciona? (A Teoria por Trás do Electron)
+## 📖 Visão Geral
 
-### Qualquer aplicativo Electron pode ser transformado em Vidro?
-**SIM! Absolutamente qualquer aplicativo construído em Electron** (OpenCode, OmniRoute, VS Code, Discord, Slack, Obsidian, Spotify, Notion, etc.) pode ser convertido em vidro líquido translúcido.
+O **OpenCode Desktop** é um aplicativo construído em **Electron + React (Design System v2)**. Por padrão de fábrica, ele vem com fundos escuros e opacos (`#080808`, `#101010`, `#18181b`).
 
-### Como o motor funciona por debaixo dos panos?
-Um aplicativo Electron é composto por duas partes:
-1. **Processo Principal (Node.js / `BrowserWindow`):** Gerencia a janela nativa do sistema operacional.
-2. **Processo de Renderização (Chromium / HTML / CSS / React):** Renderiza a interface do usuário.
-
-Para alcançar o efeito **Translucid Liquid Glass**:
-* No **macOS**, o Electron acessa a API nativa da Apple (`NSVisualEffectView`) através de `vibrancy: "under-window"`, `transparent: true`, `backgroundColor: "#00000000"` e `opacity: 0.92`.
-* No **Design System Web**, neutralizamos todas as cores de fundo sólidas (`--v2-background-bg-*` e `background-color`) para `transparent !important`, e aplicamos `backdrop-filter: blur(...)` com tipografia em branco de alto contraste (`#ffffff`).
+O **Translucid OpenCode** é um motor de patch automatizado que:
+1. Desbloqueia o canal Alpha nativo do macOS através do **`NSVisualEffectView`** (`vibrancy: "under-window"`, `transparent: true`, `opacity: 0.94`).
+2. Neutraliza todas as variáveis de background sólido do design system v2 (`--v2-background-bg-*`) para `transparent !important`.
+3. Aplica **Alto Contraste de Branco Reluzente (`#ffffff`)** com micro-sombras ópticas nos textos e na logo da Home, garantindo legibilidade nítida sobre qualquer papel de parede.
+4. Ativa **Fontes Profissionais** com suporte a ligaduras de código no editor (`Fira Code`, `SF Pro Display`, `JetBrainsMono Nerd Font`).
+5. Garante **120 FPS cravados (ProMotion)** usando isolamento de textura por GPU (`transform: translateZ(0)`).
 
 ---
 
-## ⚡ Como Aplicar em 1 Segundo (Reproduza 1000 Vezes)
+## ⚡ Como Usar (Aplicação em 1 Comando)
 
 Abra o Terminal nesta pasta e execute:
 
 ```bash
+# 1. Conceda permissão de execução aos scripts
 chmod +x *.sh
 
-# Aplicar tudo de uma vez (Fontes + OpenCode + OmniRoute)
-./apply-all.sh
-```
-
-Ou execute individualmente conforme desejar:
-
-```bash
-# 1. Apenas instalar as 312 Fontes Pro (Fira Code, JetBrains Mono, Monaspace)
+# 2. Instale as fontes profissionais no macOS
 ./install-pro-fonts.sh
 
-# 2. Apenas aplicar no OpenCode Desktop
+# 3. Aplique a transparência líquida no OpenCode
 ./apply-translucid.sh
+```
 
-# 3. Apenas aplicar no OmniRoute Desktop
-./apply-translucid-omniroute.sh
+O script automaticamente:
+* Encerra instâncias em execução do OpenCode.
+* Cria um backup de segurança em `/Applications/OpenCode.app/Contents/Resources/app.asar.backup`.
+* Desempacota o arquivo `.asar`, injeta as diretivas de janela transparente e o CSS de alto contraste.
+* Reempacota o aplicativo e o abre instantaneamente com a interface de vidro líquido ativa!
 
-# 4. Restaurar OpenCode original de fábrica
+---
+
+## 🔄 Como Restaurar para o Padrão de Fábrica
+
+Se em algum momento você desejar desfazer as alterações e voltar ao OpenCode original:
+
+```bash
 ./restore-original.sh
 ```
 
@@ -57,20 +58,45 @@ Ou execute individualmente conforme desejar:
 ## ❓ Perguntas Frequentes (FAQ)
 
 ### 1. Se eu desligar ou reiniciar o Mac, o visual volta ao padrão?
-> **Não!** As alterações são gravadas diretamente no binário `app.asar` e nos scripts internos do aplicativo. Ao desligar, reiniciar ou suspender o Mac, o efeito **permanece ativo e intacto indefinidamente**.
+> **Não!** As modificações são gravadas diretamente no pacote físico `app.asar` dentro de `/Applications/OpenCode.app`. O efeito translúcido **permanece ativo e intacto indefinidamente**.
 
-### 2. Se o OpenCode ou OmniRoute receber uma atualização, volta ao padrão?
-> **Sim.** Quando um aplicativo Electron é atualizado, o instalador substitui o pacote `app.asar` pela nova versão.
-> **Solução:** Basta rodar `./apply-all.sh` e em **5 segundos** o visual de vidro estará novamente ativo na nova versão!
+### 2. Se o OpenCode for atualizado, o visual volta ao padrão?
+> **Sim.** Quando um aplicativo Electron recebe uma atualização oficial, o instalador substitui o arquivo `app.asar`.
+> **Solução:** Basta rodar novamente `./apply-translucid.sh` para reaplicar o efeito na nova versão em menos de **10 segundos**!
 
-### 3. Isso funciona apenas no macOS?
-> No **macOS**, o efeito utiliza o desfoque real de vidro do sistema operacional (`NSVisualEffectView`). No **Windows 11**, o Electron suporta `backgroundMaterial: 'mica'` ou `transparent: true`, e no **Linux** através dos compositores X11/Wayland. No macOS, a renderização de vidro é nativa e fluida a 120Hz no Apple Silicon.
+### 3. A engine do aplicativo ou chamadas de IA são afetadas?
+> **Não, 100% intactas.** O patch atua estritamente na camada cosmética (janela `BrowserWindow` e CSS do DOM). Toda a comunicação de LLMs, WebSockets, subprocessos `node-pty` e chaves de API funcionam com velocidade e segurança normais.
 
-### 4. A engine do aplicativo ou chamadas de IA são afetadas?
-> **Não.** O patch atua com precisão cirúrgica apenas nas camadas de apresentação visual. Conexões de API, WebSockets, subprocessos e tokens funcionam 100% normalmente.
+---
+
+## 🛠️ O que foi modificado por debaixo dos panos:
+
+### No Processo Principal do Electron (`out/main/index.js`):
+```javascript
+mainWindow = new BrowserWindow({
+  transparent: true,
+  backgroundColor: "#00000000",
+  opacity: 0.94,
+  titleBarStyle: "hidden",
+  trafficLightPosition: { x: 14, y: 14 },
+  vibrancy: "under-window",
+  visualEffectState: "active"
+});
+```
+
+### Na Camada Web (`out/renderer/index.html`):
+```css
+:root, [data-theme], .dark {
+  --v2-background-bg-base: transparent !important;
+  --v2-background-bg-layer-01: transparent !important;
+  --v2-text-text-base: #ffffff !important;
+  --font-sans: 'SF Pro Display', -apple-system, sans-serif !important;
+  --font-mono: 'Fira Code', 'JetBrainsMono Nerd Font', monospace !important;
+}
+```
 
 ---
 
 ## 📄 Licença
 
-Distribuído sob a licença [MIT](LICENSE). Desenvolvido para personalização estética de alta fidelidade visual no macOS.
+Distribuído sob a licença [MIT](LICENSE). Desenvolvido para personalização estética de alta fidelidade visual.
