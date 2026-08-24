@@ -1,6 +1,6 @@
 /**
- * patch-engine.js — Translucid OpenCode Engine
- * Motor de injeção de Liquid Glass e Transparência Nativa no OpenCode Desktop
+ * patch-engine.js — Translucid OpenCode Engine (High Contrast Edition)
+ * Motor de injeção de Liquid Glass, Alto Contraste de Branco e Fontes Pro
  */
 const fs = require('fs');
 const path = require('path');
@@ -12,10 +12,10 @@ if (!targetDir || !fs.existsSync(targetDir)) {
   process.exit(1);
 }
 
-console.log('⚡ Iniciando injeção de Transparência Líquida em:', targetDir);
+console.log('⚡ Iniciando injeção de Transparência Líquida + Alto Contraste em:', targetDir);
 
 // =========================================================================
-// 1. out/renderer/index.html (Injeção de CSS de Transparência Absoluta)
+// 1. out/renderer/index.html (Injeção de CSS de Transparência + Alto Contraste)
 // =========================================================================
 const htmlPath = path.join(targetDir, 'out/renderer/index.html');
 if (fs.existsSync(htmlPath)) {
@@ -35,6 +35,7 @@ if (fs.existsSync(htmlPath)) {
     <link rel="stylesheet" crossorigin href="./assets/main-CIkHDf4N.css">
     <style id="translucid-opencode-glass">
       :root, [data-theme], [data-color-scheme="dark"], [data-color-scheme="light"], .dark, body {
+        /* Backgrounds 100% Translúcidos */
         --v2-background-bg-base: transparent !important;
         --v2-background-bg-layer-01: transparent !important;
         --v2-background-bg-layer-02: transparent !important;
@@ -53,8 +54,47 @@ if (fs.existsSync(htmlPath)) {
         --surface-raised-base: transparent !important;
         --surface-inset-base: transparent !important;
         --surface-diff-unchanged-base: transparent !important;
+
+        /* Alto Contraste de Branco Nítido nos Textos */
+        --v2-text-text-base: #ffffff !important;
+        --v2-text-text-subtle: #f1f5f9 !important;
+        --v2-text-text-muted: #cbd5e1 !important;
+        --text-base: #ffffff !important;
+        --text-strong: #ffffff !important;
+        --text-stronger: #ffffff !important;
+        --text-weak: #f1f5f9 !important;
+        --text-weaker: #cbd5e1 !important;
+        --icon-base: #ffffff !important;
+        --icon-strong: #ffffff !important;
+
+        /* Bordas Definidas */
+        --v2-border-border-base: rgba(255, 255, 255, 0.18) !important;
+        --v2-border-border-muted: rgba(255, 255, 255, 0.12) !important;
+        --border-weak-base: rgba(255, 255, 255, 0.12) !important;
+        --border-base: rgba(255, 255, 255, 0.18) !important;
+        --border-strong-base: rgba(255, 255, 255, 0.28) !important;
       }
-      html, body, #root, #root > div, main, aside, section, article, nav, header, [data-slot="dialog-container"], .settings-v2-panel {
+
+      /* Tipografia com sombra nítida contra fundos claros ou escuros */
+      body, p, span, h1, h2, h3, h4, h5, h6, label, button, a, div {
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+      }
+
+      html, body {
+        background: transparent !important;
+        background-color: transparent !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+      }
+
+      #root {
+        background: transparent !important;
+        background-color: transparent !important;
+        backdrop-filter: blur(14px) saturate(160%) !important;
+        -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+      }
+
+      /* Containers translúcidos */
+      main, aside, section, article, nav, header, [data-slot="dialog-container"], .settings-v2-panel {
         background: transparent !important;
         background-color: transparent !important;
       }
@@ -62,15 +102,30 @@ if (fs.existsSync(htmlPath)) {
         background: transparent !important;
         background-color: transparent !important;
       }
-      [data-component="text-input-v2"], textarea, input, [contenteditable="true"] {
-        background-color: rgba(255, 255, 255, 0.06) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        backdrop-filter: blur(10px) !important;
+
+      /* Inputs, Dropdowns e Seletores com acabamento de vidro de alto contraste */
+      [data-component="text-input-v2"], 
+      [data-component="settings-v2-list"],
+      textarea, input, [contenteditable="true"], select {
+        background-color: rgba(0, 0, 0, 0.35) !important;
+        border: 1px solid rgba(255, 255, 255, 0.22) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
       }
+
+      /* Botões de Alto Contraste */
+      [data-component="button-v2"], button {
+        color: #ffffff !important;
+      }
+
+      /* Diálogos modais / Popovers */
       dialog, [role="dialog"], [class*="modal"], [class*="popover"] {
-        background: rgba(15, 17, 25, 0.35) !important;
-        backdrop-filter: blur(25px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        background: rgba(10, 12, 18, 0.55) !important;
+        backdrop-filter: blur(35px) saturate(190%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6) !important;
       }
     </style>
   </head>
@@ -80,11 +135,11 @@ if (fs.existsSync(htmlPath)) {
   </body>
 </html>`;
   fs.writeFileSync(htmlPath, htmlContent, 'utf8');
-  console.log('✅ out/renderer/index.html reescrito com sucesso.');
+  console.log('✅ out/renderer/index.html reescrito com Alto Contraste.');
 }
 
 // =========================================================================
-// 2. out/renderer/oc-theme-preload.js (Neutralização de Cores Sólidas)
+// 2. out/renderer/oc-theme-preload.js
 // =========================================================================
 const preloadJsPath = path.join(targetDir, 'out/renderer/oc-theme-preload.js');
 if (fs.existsSync(preloadJsPath)) {
@@ -104,13 +159,12 @@ if (fs.existsSync(preloadJsPath)) {
 }
 
 // =========================================================================
-// 3. out/main/index.js (Configuração da Janela BrowserWindow no macOS)
+// 3. out/main/index.js
 // =========================================================================
 const mainJsPath = path.join(targetDir, 'out/main/index.js');
 if (fs.existsSync(mainJsPath)) {
   let mainJs = fs.readFileSync(mainJsPath, 'utf8');
 
-  // Neutraliza setBackgroundColor no runtime
   mainJs = mainJs.replace(
     /function setBackgroundColor\(color\) \{[\s\S]*?win\.setBackgroundColor\(color\);[\s\S]*?\}\);[\s\S]*?\}/,
     `function setBackgroundColor(color) {
@@ -125,7 +179,6 @@ if (fs.existsSync(mainJsPath)) {
 }`
   );
 
-  // Injeta parâmetros de transparência na criação da janela
   mainJs = mainJs.replace(
     /function createMainWindow\(id = randomUUID\(\)\) \{[\s\S]*?const win = new BrowserWindow\(\{[\s\S]*?webPreferences: \{/,
     `function createMainWindow(id = randomUUID()) {
@@ -147,7 +200,7 @@ if (fs.existsSync(mainJsPath)) {
     backgroundColor: "#00000000",
     transparent: true,
     hasShadow: true,
-    opacity: 0.90,
+    opacity: 0.92,
     ...process.platform === "darwin" ? {
       titleBarStyle: "hidden",
       trafficLightPosition: { x: 14, y: 14 },
@@ -163,7 +216,7 @@ if (fs.existsSync(mainJsPath)) {
   );
 
   fs.writeFileSync(mainJsPath, mainJs, 'utf8');
-  console.log('✅ out/main/index.js configurado com transparência e vibrancy.');
+  console.log('✅ out/main/index.js configurado.');
 }
 
-console.log('🎉 Patch de Transparência aplicado com sucesso!');
+console.log('🎉 Patch de Alto Contraste de Branco aplicado com sucesso!');
