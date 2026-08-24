@@ -1,6 +1,6 @@
 /**
- * patch-engine.js — Translucid OpenCode Engine (Ultra-Contrast + Pro Fonts Edition)
- * Injeta Liquid Glass, Alto Contraste na Home, Fira Code Ligatures e SF Pro Typography
+ * patch-engine.js — Translucid OpenCode Engine (120 FPS ProMotion Edition)
+ * Aceleração por Hardware Metal, Remoção de Repaints Pesados e Fluidez Absoluta
  */
 const fs = require('fs');
 const path = require('path');
@@ -12,7 +12,7 @@ if (!targetDir || !fs.existsSync(targetDir)) {
   process.exit(1);
 }
 
-console.log('⚡ Iniciando injeção de Liquid Glass, Pro Fonts e Alto Contraste na Home em:', targetDir);
+console.log('⚡ Otimizando OpenCode para 120 FPS ProMotion em:', targetDir);
 
 // =========================================================================
 // 1. out/renderer/assets/main-DxX1DkV8.js (Definição de Fontes Padrão Pro)
@@ -24,11 +24,11 @@ if (fs.existsSync(mainRendererJsPath)) {
   rJs = rJs.replace(/const sansDefault\s*=\s*"System Sans";/, 'const sansDefault = "SF Pro Display";');
   rJs = rJs.replace(/const terminalDefault\s*=\s*"JetBrainsMono Nerd Font Mono";/, 'const terminalDefault = "JetBrainsMono Nerd Font";');
   fs.writeFileSync(mainRendererJsPath, rJs, 'utf8');
-  console.log('✅ main-DxX1DkV8.js configurado com Fira Code e SF Pro Display como padrão.');
+  console.log('✅ main-DxX1DkV8.js configurado com Fira Code e SF Pro Display.');
 }
 
 // =========================================================================
-// 2. out/renderer/index.html (Estilos Liquid Glass, Alto Contraste & Home Glow)
+// 2. out/renderer/index.html (Estilos 120 FPS com Aceleração Metal)
 // =========================================================================
 const htmlPath = path.join(targetDir, 'out/renderer/index.html');
 if (fs.existsSync(htmlPath)) {
@@ -48,7 +48,6 @@ if (fs.existsSync(htmlPath)) {
     <link rel="stylesheet" crossorigin href="./assets/main-CIkHDf4N.css">
     <style id="translucid-opencode-glass">
       :root, [data-theme], [data-color-scheme="dark"], [data-color-scheme="light"], .dark, body {
-        /* Backgrounds 100% Translúcidos */
         --v2-background-bg-base: transparent !important;
         --v2-background-bg-layer-01: transparent !important;
         --v2-background-bg-layer-02: transparent !important;
@@ -68,7 +67,6 @@ if (fs.existsSync(htmlPath)) {
         --surface-inset-base: transparent !important;
         --surface-diff-unchanged-base: transparent !important;
 
-        /* Alto Contraste de Branco Nítido nos Textos */
         --v2-text-text-base: #ffffff !important;
         --v2-text-text-subtle: #f8fafc !important;
         --v2-text-text-muted: #e2e8f0 !important;
@@ -80,19 +78,16 @@ if (fs.existsSync(htmlPath)) {
         --icon-base: #ffffff !important;
         --icon-strong: #ffffff !important;
 
-        /* Bordas Definidas */
         --v2-border-border-base: rgba(255, 255, 255, 0.22) !important;
         --v2-border-border-muted: rgba(255, 255, 255, 0.14) !important;
         --border-weak-base: rgba(255, 255, 255, 0.14) !important;
         --border-base: rgba(255, 255, 255, 0.22) !important;
         --border-strong-base: rgba(255, 255, 255, 0.32) !important;
 
-        /* Fontes Pro */
         --font-sans: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif !important;
         --font-mono: 'Fira Code', 'JetBrainsMono Nerd Font', 'Monaspace Neon', 'SF Mono', monospace !important;
       }
 
-      /* Tipografia com sombra suave de alto relevo */
       body, p, span, h1, h2, h3, h4, h5, h6, label, button, a, div {
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.70);
       }
@@ -102,9 +97,9 @@ if (fs.existsSync(htmlPath)) {
         background-color: transparent !important;
         font-family: var(--font-sans);
         -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
       }
 
-      /* Ligaduras e Renderização de Código Pro */
       code, pre, [data-component*="code"], [class*="font-mono"], .monaco-editor, .xterm {
         font-family: 'Fira Code', 'Monaspace Neon', 'JetBrainsMono Nerd Font', monospace !important;
         font-variant-ligatures: contextual !important;
@@ -115,69 +110,63 @@ if (fs.existsSync(htmlPath)) {
       #root {
         background: transparent !important;
         background-color: transparent !important;
-        backdrop-filter: blur(14px) saturate(160%) !important;
-        -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+        transform: translateZ(0);
       }
 
-      /* Containers translúcidos */
       main, aside, section, article, nav, header, [data-slot="dialog-container"], .settings-v2-panel {
         background: transparent !important;
         background-color: transparent !important;
+        transform: translateZ(0);
       }
       [class*="bg-background-"], [class*="bg-zinc-"], [class*="bg-neutral-"], [class*="bg-slate-"], [class*="bg-black"], [class*="bg-[#"] {
         background: transparent !important;
         background-color: transparent !important;
       }
 
-      /* ========================================================= */
-      /* HOME & CAIXA DE PROMPT COM ALTO CONTRASTE PREMIUM         */
-      /* ========================================================= */
       [data-component="text-input-v2"], 
       [data-component="settings-v2-list"],
       textarea, input, [contenteditable="true"], select {
         background-color: rgba(10, 14, 22, 0.45) !important;
         border: 1px solid rgba(255, 255, 255, 0.28) !important;
-        backdrop-filter: blur(20px) !important;
-        -webkit-backdrop-filter: blur(20px) !important;
         color: #ffffff !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.40) !important;
         border-radius: 10px !important;
+        transform: translateZ(0);
       }
 
-      /* Prompt Box Principal na Home */
       form [data-component="text-input-v2"],
       form textarea,
       [class*="prompt-box"],
       [class*="chat-input"] {
         background-color: rgba(8, 10, 16, 0.55) !important;
         border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
-        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.20) !important;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55) !important;
+        transform: translateZ(0);
       }
 
-      /* Logo e Títulos da Home */
       h1, [class*="logo"], [class*="hero-title"] {
         color: #ffffff !important;
         font-weight: 800 !important;
         letter-spacing: -0.03em !important;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 255, 255, 0.25) !important;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 255, 255, 0.35) !important;
       }
 
-      /* Botões e Badges com Contraste Vivo */
       [data-component="button-v2"], button {
         color: #ffffff !important;
         border-color: rgba(255, 255, 255, 0.20) !important;
+        transform: translateZ(0);
+        transition: background-color 0.15s ease;
       }
       button:hover {
-        background-color: rgba(255, 255, 255, 0.12) !important;
+        background-color: rgba(255, 255, 255, 0.14) !important;
         border-color: rgba(255, 255, 255, 0.35) !important;
       }
 
-      /* Diálogos modais / Popovers */
       dialog, [role="dialog"], [class*="modal"], [class*="popover"] {
         background: rgba(10, 12, 18, 0.65) !important;
-        backdrop-filter: blur(40px) saturate(190%) !important;
         border: 1px solid rgba(255, 255, 255, 0.28) !important;
         box-shadow: 0 30px 70px rgba(0, 0, 0, 0.70) !important;
+        transform: translateZ(0);
       }
     </style>
   </head>
@@ -187,7 +176,7 @@ if (fs.existsSync(htmlPath)) {
   </body>
 </html>`;
   fs.writeFileSync(htmlPath, htmlContent, 'utf8');
-  console.log('✅ out/renderer/index.html reescrito com Alto Contraste na Home e Pro Fonts.');
+  console.log('✅ out/renderer/index.html otimizado para 120 FPS.');
 }
 
 // =========================================================================
@@ -252,7 +241,7 @@ if (fs.existsSync(mainJsPath)) {
     backgroundColor: "#00000000",
     transparent: true,
     hasShadow: true,
-    opacity: 0.92,
+    opacity: 0.94,
     ...process.platform === "darwin" ? {
       titleBarStyle: "hidden",
       trafficLightPosition: { x: 14, y: 14 },
@@ -271,4 +260,4 @@ if (fs.existsSync(mainJsPath)) {
   console.log('✅ out/main/index.js configurado.');
 }
 
-console.log('🎉 Patch Pro Fonts + Home High Contrast aplicado com sucesso!');
+console.log('🎉 OpenCode otimizado para 120 FPS com sucesso!');
