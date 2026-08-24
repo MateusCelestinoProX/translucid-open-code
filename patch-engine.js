@@ -1,6 +1,7 @@
 /**
- * patch-engine.js — Translucid OpenCode Engine (120 FPS ProMotion Edition)
- * Aceleração por Hardware Metal, Remoção de Repaints Pesados e Fluidez Absoluta
+ * patch-engine.js — Translucid OpenCode Engine (Permanent Dark Mode & 120 FPS Edition)
+ * Garante 100% que o OpenCode permaneça SEMPRE no Modo Escuro (Dark Mode Fixo),
+ * independente se o macOS estiver no Modo Claro ou Escuro.
  */
 const fs = require('fs');
 const path = require('path');
@@ -12,7 +13,7 @@ if (!targetDir || !fs.existsSync(targetDir)) {
   process.exit(1);
 }
 
-console.log('⚡ Otimizando OpenCode para 120 FPS ProMotion em:', targetDir);
+console.log('⚡ Injetando Modo Escuro Permanente + Liquid Glass 120 FPS em:', targetDir);
 
 // =========================================================================
 // 1. out/renderer/assets/main-DxX1DkV8.js (Definição de Fontes Padrão Pro)
@@ -28,12 +29,12 @@ if (fs.existsSync(mainRendererJsPath)) {
 }
 
 // =========================================================================
-// 2. out/renderer/index.html (Estilos 120 FPS com Aceleração Metal)
+// 2. out/renderer/index.html (Estilos 120 FPS + Trava Permanente no Dark Mode)
 // =========================================================================
 const htmlPath = path.join(targetDir, 'out/renderer/index.html');
 if (fs.existsSync(htmlPath)) {
   const htmlContent = `<!doctype html>
-<html lang="en" style="background-color: transparent !important; background: transparent !important;">
+<html lang="en" class="dark" data-color-scheme="dark" style="background-color: transparent !important; background: transparent !important; color-scheme: dark !important;">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -47,7 +48,11 @@ if (fs.existsSync(htmlPath)) {
     <script type="module" crossorigin src="./assets/main-DxX1DkV8.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/main-CIkHDf4N.css">
     <style id="translucid-opencode-glass">
-      :root, [data-theme], [data-color-scheme="dark"], [data-color-scheme="light"], .dark, body {
+      /* 🔒 FORÇA MODO ESCURO PERMANENTE EM QUALQUER CENÁRIO */
+      :root, [data-theme], [data-color-scheme], [data-color-scheme="light"], [data-color-scheme="dark"], .light, .dark, body, html {
+        color-scheme: dark !important;
+
+        /* Fundo Totalmente Translúcido */
         --v2-background-bg-base: transparent !important;
         --v2-background-bg-layer-01: transparent !important;
         --v2-background-bg-layer-02: transparent !important;
@@ -67,6 +72,7 @@ if (fs.existsSync(htmlPath)) {
         --surface-inset-base: transparent !important;
         --surface-diff-unchanged-base: transparent !important;
 
+        /* Textos em Branco Puro e Alto Contraste */
         --v2-text-text-base: #ffffff !important;
         --v2-text-text-subtle: #f8fafc !important;
         --v2-text-text-muted: #e2e8f0 !important;
@@ -78,12 +84,14 @@ if (fs.existsSync(htmlPath)) {
         --icon-base: #ffffff !important;
         --icon-strong: #ffffff !important;
 
+        /* Bordas Definidas */
         --v2-border-border-base: rgba(255, 255, 255, 0.22) !important;
         --v2-border-border-muted: rgba(255, 255, 255, 0.14) !important;
         --border-weak-base: rgba(255, 255, 255, 0.14) !important;
         --border-base: rgba(255, 255, 255, 0.22) !important;
         --border-strong-base: rgba(255, 255, 255, 0.32) !important;
 
+        /* Tipografia Pro */
         --font-sans: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif !important;
         --font-mono: 'Fira Code', 'JetBrainsMono Nerd Font', 'Monaspace Neon', 'SF Mono', monospace !important;
       }
@@ -170,41 +178,48 @@ if (fs.existsSync(htmlPath)) {
       }
     </style>
   </head>
-  <body class="antialiased overscroll-none text-12-regular overflow-hidden" style="background: transparent !important; background-color: transparent !important;">
+  <body class="dark antialiased overscroll-none text-12-regular overflow-hidden" data-color-scheme="dark" style="background: transparent !important; background-color: transparent !important; color-scheme: dark !important;">
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root" class="flex flex-col h-dvh" style="background: transparent !important; background-color: transparent !important;"></div>
   </body>
 </html>`;
   fs.writeFileSync(htmlPath, htmlContent, 'utf8');
-  console.log('✅ out/renderer/index.html otimizado para 120 FPS.');
+  console.log('✅ out/renderer/index.html travado no Modo Escuro Permanente.');
 }
 
 // =========================================================================
-// 3. out/renderer/oc-theme-preload.js
+// 3. out/renderer/oc-theme-preload.js (Trava Rígida no Tema Dark)
 // =========================================================================
 const preloadJsPath = path.join(targetDir, 'out/renderer/oc-theme-preload.js');
 if (fs.existsSync(preloadJsPath)) {
   const preloadContent = `;(function () {
-  var key = "opencode-theme-id";
-  var themeId = localStorage.getItem(key) || "oc-2";
-  var scheme = localStorage.getItem("opencode-color-scheme") || "system";
-  var isDark = scheme === "dark" || (scheme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
-  var mode = isDark ? "dark" : "light";
+  try {
+    localStorage.setItem("opencode-theme-id", "oc-2");
+    localStorage.setItem("opencode-color-scheme", "dark");
+  } catch (e) {}
 
-  document.documentElement.dataset.theme = themeId;
-  document.documentElement.dataset.colorScheme = mode;
+  document.documentElement.dataset.theme = "oc-2";
+  document.documentElement.dataset.colorScheme = "dark";
+  document.documentElement.classList.add("dark");
+  document.documentElement.classList.remove("light");
   document.documentElement.style.backgroundColor = "transparent";
+  document.documentElement.style.colorScheme = "dark";
 })();`;
   fs.writeFileSync(preloadJsPath, preloadContent, 'utf8');
-  console.log('✅ out/renderer/oc-theme-preload.js neutralizado.');
+  console.log('✅ out/renderer/oc-theme-preload.js configurado para Modo Escuro Permanente.');
 }
 
 // =========================================================================
-// 4. out/main/index.js
+// 4. out/main/index.js (Electron NativeTheme Dark Lock)
 // =========================================================================
 const mainJsPath = path.join(targetDir, 'out/main/index.js');
 if (fs.existsSync(mainJsPath)) {
   let mainJs = fs.readFileSync(mainJsPath, 'utf8');
+
+  // Força nativeTheme.themeSource = "dark"
+  if (!mainJs.includes('nativeTheme.themeSource = "dark"')) {
+    mainJs = `const { nativeTheme: _nativeTheme } = require("electron");\ntry { _nativeTheme.themeSource = "dark"; } catch(e){}\n` + mainJs;
+  }
 
   mainJs = mainJs.replace(
     /function setBackgroundColor\(color\) \{[\s\S]*?win\.setBackgroundColor\(color\);[\s\S]*?\}\);[\s\S]*?\}/,
@@ -228,7 +243,7 @@ if (fs.existsSync(mainJsPath)) {
     defaultWidth: 1280,
     defaultHeight: 800
   });
-  const mode = tone();
+  const mode = "dark";
   const win = new BrowserWindow({
     x: state.x,
     y: state.y,
@@ -251,13 +266,13 @@ if (fs.existsSync(mainJsPath)) {
     ...process.platform === "win32" ? {
       frame: false,
       titleBarStyle: "hidden",
-      titleBarOverlay: overlay({ mode })
+      titleBarOverlay: overlay({ mode: "dark" })
     } : {},
     webPreferences: {`
   );
 
   fs.writeFileSync(mainJsPath, mainJs, 'utf8');
-  console.log('✅ out/main/index.js configurado.');
+  console.log('✅ out/main/index.js configurado com nativeTheme dark.');
 }
 
-console.log('🎉 OpenCode otimizado para 120 FPS com sucesso!');
+console.log('🎉 OpenCode travado no Modo Escuro Permanente com sucesso!');
