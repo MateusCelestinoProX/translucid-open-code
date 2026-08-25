@@ -648,50 +648,54 @@ function renderCrewAgentInlineCard(agent, crewId, isLeader = false) {
 
   return `
     <div class="office-agent-mini-card ${isLeader ? 'is-leader' : ''}" id="crewAgentCard_${crewId}_${agent.name}">
-      <!-- AVATAR & STATUS -->
-      <div class="agent-mini-avatar" style="${isLeader ? 'border-color: rgba(245, 158, 11, 0.5); box-shadow: 0 0 14px rgba(245, 158, 11, 0.25);' : ''}">
-        ${agent.avatar ? `<img src="${escapeHtml(agent.avatar)}" alt="avatar">` : (isLeader ? `👑` : `👤`)}
-        <span class="agent-status-beacon ${hasSchedule ? 'working' : 'idle'}" title="${hasSchedule ? 'Agendamento Ativo' : 'Pronto'}"></span>
+      <!-- TOP: AVATAR & STATUS -->
+      <div class="agent-mini-top-row">
+        <div class="agent-mini-avatar ${isLeader ? 'avatar-leader' : ''}">
+          ${agent.avatar ? `<img src="${escapeHtml(agent.avatar)}" alt="avatar">` : (isLeader ? `👑` : `👤`)}
+          <span class="agent-status-beacon ${hasSchedule ? 'working' : 'idle'}" title="${hasSchedule ? 'Agendamento Ativo' : 'Pronto'}"></span>
+        </div>
       </div>
 
       <!-- IDENTITY & DYNAMIC ROLE -->
-      <div style="flex:1; min-width:0; width: 100%;">
+      <div class="agent-mini-body">
         <div class="agent-mini-handle">
-          ${isLeader ? `<span style="color:#fde047;">👑</span> ` : ''}@${escapeHtml(agent.name)}
+          ${isLeader ? `<span style="color:#fde047; font-size: 14px;">👑</span> ` : ''}@${escapeHtml(agent.name)}
         </div>
         <div class="agent-mini-role">${escapeHtml(agent.role || agent.displayName || 'Especialista')}</div>
         ${agent.lane ? `<div class="agent-lane-badge" title="${escapeHtml(agent.lane)}">🎯 ${escapeHtml(agent.lane)}</div>` : ''}
-      </div>
-
-      <!-- SLIM ARCHITECTURE BADGES -->
-      <div class="agent-slim-meta-row" style="justify-content: center; margin: 8px 0;">
-        <span class="agent-perm-badge ${isReadOnly ? 'perm-readonly' : 'perm-readwrite'}">
-          ${isReadOnly ? '🔒 Read-Only' : '⚡ Read/Write'}
-        </span>
-        ${agent.stats ? `<span class="agent-stats-badge" title="${escapeHtml(agent.stats)}">🚀 ${escapeHtml(agent.stats.slice(0, 16))}</span>` : ''}
-        ${isInitialPrompt ? `<span class="tag-origin initial-prompt" style="background: rgba(99, 102, 241, 0.25); color: #c7d2fe; border: 1px solid rgba(99, 102, 241, 0.5); font-weight: 800; font-size: 8.5px; padding: 2px 5px; border-radius: 4px;">⚡ INIT</span>` : ''}
-      </div>
-
-      <!-- META & ACTIONS -->
-      <div class="agent-mini-meta" style="margin-top: 6px;">
-        ${hasSchedule ? `
-          <span class="agent-mini-pill" style="color:#34d399; border-color:rgba(52,211,153,0.3); background:rgba(52,211,153,0.08);">
-            🕒 ${escapeHtml(scheduleText)}
+        
+        <!-- SLIM ARCHITECTURE BADGES -->
+        <div class="agent-slim-meta-row" style="justify-content: center; margin: 8px 0;">
+          <span class="agent-perm-badge ${isReadOnly ? 'perm-readonly' : 'perm-readwrite'}">
+            ${isReadOnly ? '🔒 Read-Only' : '⚡ Read/Write'}
           </span>
-        ` : ''}
-        <span class="agent-mini-pill">${escapeHtml(shortModel)}</span>
+          ${agent.stats ? `<span class="agent-stats-badge" title="${escapeHtml(agent.stats)}">🚀 ${escapeHtml(agent.stats.slice(0, 16))}</span>` : ''}
+          ${isInitialPrompt ? `<span class="tag-origin initial-prompt" style="background: rgba(99, 102, 241, 0.25); color: #c7d2fe; border: 1px solid rgba(99, 102, 241, 0.5); font-weight: 800; font-size: 8.5px; padding: 2px 5px; border-radius: 4px;">⚡ INIT</span>` : ''}
+        </div>
+      </div>
 
-        <div style="display: flex; gap: 5px; margin-top: 8px; width: 100%; justify-content: center; flex-wrap: wrap;">
-          <button class="agent-routing-btn" style="font-size: 9.5px; padding: 4px 7px;" onclick="openAgentRoutingModal('${escapeHtml(agent.name)}')">
+      <!-- BOTTOM: ACTIONS & META (100% EMBUTIDO DENTRO DO CARD) -->
+      <div class="agent-mini-footer">
+        <div class="agent-mini-pills-row">
+          ${hasSchedule ? `
+            <span class="agent-mini-pill" style="color:#34d399; border-color:rgba(52,211,153,0.3); background:rgba(52,211,153,0.08);">
+              🕒 ${escapeHtml(scheduleText)}
+            </span>
+          ` : ''}
+          <span class="agent-mini-pill">${escapeHtml(shortModel)}</span>
+        </div>
+
+        <div class="agent-mini-actions-grid">
+          <button class="agent-routing-btn btn-card-action" onclick="openAgentRoutingModal('${escapeHtml(agent.name)}')">
             📋 Contrato
           </button>
-          <button class="btn-secondary" style="font-size: 9.5px; padding: 4px 7px;" onclick="runCrewAgentTaskNow('${escapeHtml(crewId)}', '${escapeHtml(agent.name)}')">
+          <button class="btn-secondary btn-card-action" onclick="runCrewAgentTaskNow('${escapeHtml(crewId)}', '${escapeHtml(agent.name)}')">
             ▶ Executar
           </button>
-          <button class="btn-secondary" style="font-size: 9.5px; padding: 4px 7px;" onclick="openCrewAgentModal('${escapeHtml(crewId)}', '${escapeHtml(agent.name)}')">
+          <button class="btn-secondary btn-card-action" onclick="openCrewAgentModal('${escapeHtml(crewId)}', '${escapeHtml(agent.name)}')">
             ✏️ Editar
           </button>
-          <button class="btn-remove-agent" style="font-size: 9.5px; padding: 4px 6px;" title="Excluir da Equipe" onclick="deleteCrewAgentByName('${escapeHtml(crewId)}', '${escapeHtml(agent.name)}')">
+          <button class="btn-remove-agent btn-card-delete" title="Excluir da Equipe" onclick="deleteCrewAgentByName('${escapeHtml(crewId)}', '${escapeHtml(agent.name)}')">
             🗑️
           </button>
         </div>
@@ -1783,9 +1787,9 @@ let currentSkillPickerCrewId = null;
 let currentSkillPickerSelected = new Set();
 let currentSkillPickerCategory = 'all';
 
-function openCrewSkillPickerModal(crewId) {
+async function openCrewSkillPickerModal(crewId) {
   currentSkillPickerCrewId = crewId;
-  const crew = fullCrewsList.find(c => c.id === crewId) || allDiscoveredCrews.find(c => c.id === crewId);
+  const crew = (allDiscoveredCrews || []).find(c => c.id === crewId) || (globalState.crews || []).find(c => c.id === crewId);
   const crewTitle = crew ? crew.name : crewId;
 
   const titleEl = document.getElementById('crewSkillPickerTitle');
@@ -1801,6 +1805,17 @@ function openCrewSkillPickerModal(crewId) {
   document.querySelectorAll('#crewSkillPickerModal .filter-pill').forEach(p => p.classList.remove('active'));
   const allPill = document.getElementById('pickerFilterAll');
   if (allPill) allPill.classList.add('active');
+
+  // Garante que a lista de skills do sistema esteja carregada
+  if (!skillsList || skillsList.length === 0) {
+    try {
+      const res = await fetch('/api/skills');
+      const data = await res.json();
+      skillsList = data.skills || [];
+    } catch (e) {
+      console.warn('Erro ao carregar skills para modal:', e);
+    }
+  }
 
   // Inicializa o conjunto com as skills já presentes na crew
   currentSkillPickerSelected = new Set();
