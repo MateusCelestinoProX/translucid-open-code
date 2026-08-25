@@ -5,7 +5,8 @@
   "type": "commonjs",
   "scripts": {
     "apply": "./apply-translucid.sh",
-    "restore": "./restore-original.sh"
+    "restore": "./restore-original.sh",
+    "dashboard": "cd dashboard && bun run server.ts"
   },
   "keywords": ["opencode", "glassmorphism", "translucent", "electron", "macos"],
   "author": "Mateus Celestino",

@@ -36,12 +36,15 @@ chmod +x *.sh
 
 # 3. Aplique a transparência líquida no OpenCode
 ./apply-translucid.sh
+
+# 4. Inicie o OpenCode Dashboard (opcional)
+./start-dashboard.sh
 ```
 
 O script automaticamente:
 * Encerra instâncias em execução do OpenCode.
 * Cria um backup de segurança em `/Applications/OpenCode.app/Contents/Resources/app.asar.backup`.
-* Desempacota o arquivo `.asar`, injeta as diretivas de janela transparente e o CSS de alto contraste.
+* Desempacota o arquivo `.asar`, injeta as diretivas de janela transparente, o CSS de alto contraste e o botão do Dashboard.
 * Reempacota o aplicativo e o abre instantaneamente com a interface de vidro líquido ativa!
 
 ---
