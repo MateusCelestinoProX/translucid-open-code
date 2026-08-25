@@ -1906,6 +1906,48 @@ function toggleSkillPickerSelection(skillName) {
   renderCrewSkillPickerGrid();
 }
 
+function selectAllSkillPickerSkills() {
+  skillsList.forEach(s => {
+    if (s && s.name) currentSkillPickerSelected.add(s.name.toLowerCase());
+  });
+  renderCrewSkillPickerGrid();
+  showToast(`⚡ Todas as ${skillsList.length} habilidades selecionadas!`);
+}
+
+function deselectAllSkillPickerSkills() {
+  currentSkillPickerSelected.clear();
+  renderCrewSkillPickerGrid();
+  showToast('Todas as habilidades desmarcadas.');
+}
+
+async function assignAllSystemSkillsToCrew(crewId) {
+  const confirmed = await showConfirmDialog({
+    title: 'Atribuir Todas as Skills',
+    message: `Deseja copiar e vincular <strong>TODAS as ${skillsList.length} skills</strong> do sistema à equipe <strong>"${escapeHtml(crewId)}"</strong>?`,
+    confirmText: 'Atribuir Todas as Skills',
+    isDanger: false
+  });
+  if (!confirmed) return;
+
+  const skillNames = skillsList.map(s => s.name);
+  try {
+    const res = await fetch(`/api/crews/${crewId}/skills/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ skillNames })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`⚡ ${skillNames.length} habilidades atribuídas à crew "${crewId}"!`, 'success');
+      await fetchState();
+    } else {
+      showToast('Erro: ' + (data.error || 'Falha ao sincronizar'));
+    }
+  } catch (err) {
+    showToast('Erro de rede: ' + err.message);
+  }
+}
+
 function updateCrewSkillPickerCounter() {
   const count = currentSkillPickerSelected.size;
   const countEl = document.getElementById('crewSkillPickerCounter');
@@ -1938,6 +1980,30 @@ async function saveCrewAssignedSkills() {
     showToast('Erro de rede: ' + err.message);
   }
 }
+
+async function deleteAgentByName(name) {
+  const confirmed = await showConfirmDialog({
+    title: 'Excluir Agente',
+    message: `Deseja remover permanentemente o agente <strong style="color:#fff;">@${escapeHtml(name)}</strong>?`,
+    confirmText: 'Excluir Agente Definitivamente',
+    isDanger: true
+  });
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(`/api/agents/${encodeURIComponent(name)}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(`Agente @${name} excluído.`);
+      await fetchState();
+    } else {
+      showToast('Erro: ' + (data.error || 'Falha ao excluir agente'));
+    }
+  } catch (err) {
+    showToast('Erro: ' + err.message);
+  }
+}
+
 
 // =========================================================
 // AGENTS STUDIO & COMPLETE DISCOVERY
@@ -2155,7 +2221,7 @@ function renderAgentGrid(query = '') {
           <button class="btn-secondary" style="font-size: 11px; padding: 5px 10px;" onclick="${isCrew ? `openCrewAgentModal('${escapeHtml(agent.crewId)}', '${escapeHtml(agent.name)}')` : `openCrewAgentModal('none', '${escapeHtml(agent.name)}')`}">
             ${isPresident ? '⚙️ Configurar' : 'Editar'}
           </button>
-          ${!isCrew && !isPresident ? `<button class="btn-remove-agent" style="font-size: 11px; padding: 5px 8px;" onclick="deleteAgentByName('${escapeHtml(agent.name)}')">Excluir</button>` : ''}
+          ${!isPresident ? `<button class="btn-remove-agent" style="font-size: 11px; padding: 5px 8px;" onclick="${isCrew ? `deleteCrewAgentByName('${escapeHtml(agent.crewId)}', '${escapeHtml(agent.name)}')` : `deleteAgentByName('${escapeHtml(agent.name)}')`}">Excluir</button>` : ''}
         </div>
       </div>
     `;

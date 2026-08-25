@@ -2378,6 +2378,103 @@ ${body.prompt || `# @${cleanName}\n\nInstruções especializadas do agente custo
       return Response.json({ agents });
     }
 
+    // Toggle Agent (Desativar / Ativar agente custom ou de crew)
+    if (url.pathname.match(/^\/api\/agents\/[^/]+\/toggle$/) && req.method === "POST") {
+      try {
+        const agentName = decodeURIComponent(url.pathname.split("/")[3]);
+        const body = await req.json().catch(() => ({}));
+        
+        // 1. Check in full crews
+        const crews = getFullCrews();
+        let foundInCrew = false;
+        for (const crew of crews) {
+          const agentDir = join(FULL_CREWS_DIR, crew.id, "agents", agentName);
+          const agentMd = join(agentDir, "agent.md");
+          if (existsSync(agentMd)) {
+            const raw = readFileSync(agentMd, "utf-8");
+            const { frontmatter, body: mdBody } = parseYamlFrontmatter(raw);
+            const currentMode = frontmatter.mode || "subagent";
+            const isCurrentlyDisabled = frontmatter.disabled === true || currentMode === "disabled";
+            const nextDisabled = body.disabled !== undefined ? body.disabled : !isCurrentlyDisabled;
+            frontmatter.disabled = nextDisabled;
+            frontmatter.mode = nextDisabled ? "disabled" : (frontmatter.type === "primary" ? "primary" : "subagent");
+            
+            const newContent = `---\n${Object.entries(frontmatter).map(([k, v]) => `${k}: ${typeof v === 'string' ? `"${v}"` : Array.isArray(v) ? JSON.stringify(v) : v}`).join('\n')}\n---\n\n${mdBody}`;
+            writeFileSync(agentMd, newContent, "utf-8");
+            foundInCrew = true;
+          }
+        }
+
+        // 2. Check in native agents
+        const nativeMd = join(AGENTS_DIR_PATH, `${agentName}.md`);
+        if (existsSync(nativeMd)) {
+          const raw = readFileSync(nativeMd, "utf-8");
+          const { frontmatter, body: mdBody } = parseYamlFrontmatter(raw);
+          const isCurrentlyDisabled = frontmatter.disabled === true || frontmatter.mode === "disabled";
+          const nextDisabled = body.disabled !== undefined ? body.disabled : !isCurrentlyDisabled;
+          frontmatter.disabled = nextDisabled;
+          frontmatter.mode = nextDisabled ? "disabled" : (frontmatter.type === "primary" ? "primary" : "subagent");
+          const newContent = `---\n${Object.entries(frontmatter).map(([k, v]) => `${k}: ${typeof v === 'string' ? `"${v}"` : Array.isArray(v) ? JSON.stringify(v) : v}`).join('\n')}\n---\n\n${mdBody}`;
+          writeFileSync(nativeMd, newContent, "utf-8");
+        }
+
+        // 3. Check in slim config
+        const slim = getSlimConfig();
+        if (slim.agents && slim.agents[agentName]) {
+          slim.agents[agentName].disable = body.disabled !== undefined ? body.disabled : !slim.agents[agentName].disable;
+          saveSlimConfig(slim);
+        }
+
+        return Response.json({ success: true, name: agentName, disabled: body.disabled });
+      } catch (err: any) {
+        return Response.json({ error: err.message }, { status: 500 });
+      }
+    }
+
+    // Delete Agent (Excluir agente do ecossistema)
+    if (url.pathname.startsWith("/api/agents/") && req.method === "DELETE") {
+      try {
+        const agentName = decodeURIComponent(url.pathname.replace("/api/agents/", "").trim());
+        if (agentName === "presidente") {
+          return Response.json({ error: "O Presidente é o orquestrador raiz global e não pode ser excluído." }, { status: 400 });
+        }
+
+        // 1. Remove from native agents folder
+        const nativeMd = join(AGENTS_DIR_PATH, `${agentName}.md`);
+        if (existsSync(nativeMd)) {
+          rmSync(nativeMd, { force: true });
+        }
+
+        // 2. Remove from all full crews
+        const crews = getFullCrews();
+        for (const crew of crews) {
+          const crewAgentDir = join(FULL_CREWS_DIR, crew.id, "agents", agentName);
+          if (existsSync(crewAgentDir)) {
+            rmSync(crewAgentDir, { recursive: true, force: true });
+          }
+        }
+
+        // 3. Remove from slim config
+        const slim = getSlimConfig();
+        if (slim.agents && slim.agents[agentName]) {
+          delete slim.agents[agentName];
+          saveSlimConfig(slim);
+        }
+
+        // 4. Remove from opencode.jsonc
+        const opencodeCfg = getOpenCodeConfig();
+        if (opencodeCfg.agent && opencodeCfg.agent[agentName]) {
+          delete opencodeCfg.agent[agentName];
+          writeOpenCodeConfig(opencodeCfg);
+        }
+
+        return Response.json({ success: true, name: agentName });
+      } catch (err: any) {
+        return Response.json({ error: err.message }, { status: 500 });
+      }
+    }
+
+
     if (url.pathname === "/api/teams" && req.method === "GET") {
       const crews = getFullCrews();
       return Response.json({ teams: crews });
@@ -2562,12 +2659,3 @@ ${body.prompt || `# @${cleanName}\n\nInstruções especializadas do agente custo
 
 console.log(`✨ OpenCode Master Dashboard rodando em http://localhost:${PORT}`);
 console.log(`📁 Full Crews Workspace Ativo em: ${FULL_CREWS_DIR}`);
-
-// ── Boot: CrewBee Engine — Sincronizar todos os manifestos ao iniciar ─────────
-try {
-  if (!existsSync(TEAMS_DIR_PATH)) mkdirSync(TEAMS_DIR_PATH, { recursive: true });
-  syncAllCrewManifests();
-  console.log("🐝 [CrewBee Engine] Manifestos TEAM.md + AGENTS.md sincronizados para todas as crews");
-} catch (e: any) {
-  console.warn("⚠️  [CrewBee Engine] Erro ao sincronizar manifestos na inicialização:", e.message);
-}

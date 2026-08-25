@@ -701,8 +701,7 @@
               <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <h3 id="crewAgentModalTitle" style="font-size: 19px; margin: 0;">Configuração de Agente</h3>
                 <span class="tag-origin crew" id="crewAgentModalCrewBadge" style="font-size: 11px; padding: 2px 10px;">Crew: —</span>
-                <span class="cb-tag-badge cb-tag-crewbee">🐝 CrewBee</span>
-                <span class="cb-tag-badge cb-tag-slim">⚡ Slim</span>
+                <span class="tag-origin core" style="font-size: 10px; padding: 2px 8px;">⚡ OpenCode Squad</span>
               </div>
               <span style="font-size: 12px; color: var(--text-dim); margin-top: 3px; display: block;">Estúdio de Engenharia de Agentes Autônomos OpenCode</span>
             </div>
@@ -1020,7 +1019,6 @@
       <div class="workstation-modal-footer">
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 11px; color: var(--text-muted);">Pressione <strong>ESC</strong> ou clique fora para fechar</span>
-          <button type="button" class="btn-secondary" style="font-size: 10px; padding: 4px 10px; color: #fbbf24; border-color: rgba(251,191,36,0.4);" onclick="syncCurrentCrewManifests()" title="Regerar TEAM.md e AGENTS.md desta crew">🐝 Sync Manifestos</button>
         </div>
         <div style="display: flex; gap: 8px;">
           <button class="btn-secondary" onclick="closeCrewAgentModal()">Cancelar</button>
@@ -1061,7 +1059,11 @@
           <button type="button" class="filter-pill" id="pickerFilterCrew" onclick="setCrewSkillPickerCategory('crew')">CREWS</button>
           <button type="button" class="filter-pill" id="pickerFilterCustom" onclick="setCrewSkillPickerCategory('custom')">CUSTOM</button>
         </div>
-        <button type="button" class="btn-secondary" style="font-size: 11.5px; padding: 6px 12px;" onclick="openCreateSkillModal()">+ Nova Skill</button>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" class="btn-secondary" style="font-size: 11px; padding: 6px 10px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border-color: rgba(99, 102, 241, 0.4);" onclick="selectAllSkillPickerSkills()">⚡ Selecionar Todas</button>
+          <button type="button" class="btn-secondary" style="font-size: 11px; padding: 6px 10px;" onclick="deselectAllSkillPickerSkills()">❌ Desmarcar</button>
+          <button type="button" class="btn-secondary" style="font-size: 11px; padding: 6px 10px;" onclick="openCreateSkillModal()">+ Nova Skill</button>
+        </div>
       </div>
 
       <!-- SKILLS WORKSTATION GRID (SCROLLABLE) -->
