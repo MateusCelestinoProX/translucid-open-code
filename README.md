@@ -19,6 +19,7 @@ O **Translucid OpenCode** é um motor de patch automatizado que:
 3. Aplica **Alto Contraste de Branco Reluzente (`#ffffff`)** com micro-sombras ópticas nos textos e na logo da Home, garantindo legibilidade nítida sobre qualquer papel de parede.
 4. Ativa **Fontes Profissionais** com suporte a ligaduras de código no editor (`Fira Code`, `SF Pro Display`, `JetBrainsMono Nerd Font`).
 5. Garante **120 FPS cravados (ProMotion)** usando isolamento de textura por GPU (`transform: translateZ(0)`).
+6. Integra botão nativo discreto na barra de título para acesso rápido com 1 clique ao **OpenCode Dashboard** ([`http://localhost:3030/`](http://localhost:3030/)) no seu navegador padrão.
 
 ---
 

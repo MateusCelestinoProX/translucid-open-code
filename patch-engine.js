@@ -202,12 +202,143 @@ if (fs.existsSync(htmlPath)) {
         box-shadow: 0 30px 70px rgba(0, 0, 0, 0.70) !important;
         transform: translateZ(0);
       }
+
+      /* ⚡ BOTÃO NATIVO OPENCODE DASHBOARD INTEGRADO NA TITLEBAR */
+      .oc-native-titlebar-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 5px !important;
+        height: 22px !important;
+        padding: 0 8px !important;
+        margin-right: 8px !important;
+        border-radius: 5px !important;
+        background: rgba(255, 255, 255, 0.07) !important;
+        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+        color: #cbd5e1 !important;
+        font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif) !important;
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        cursor: pointer !important;
+        -webkit-app-region: no-drag !important;
+        flex-shrink: 0 !important;
+        transition: all 0.15s ease !important;
+        text-shadow: none !important;
+        white-space: nowrap !important;
+        position: static !important;
+      }
+      .oc-native-titlebar-btn:hover {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-color: rgba(255, 255, 255, 0.35) !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+      }
+      .oc-native-titlebar-btn:active {
+        transform: scale(0.96) !important;
+        background: rgba(255, 255, 255, 0.20) !important;
+      }
     </style>
   `;
 
   html = html.replace('</head>', `${customStyle}\n</head>`);
+
+  // Remove script anterior se existir
+  html = html.replace(/<script id="oc-dashboard-script">[\s\S]*?<\/script>/g, '');
+
+  const dashboardScript = `
+    <script id="oc-dashboard-script">
+      (function() {
+        function mountDashboardButton() {
+          const existingBtn = document.getElementById('opencode-dashboard-btn');
+
+          // Container oficial de ações da titlebar à direita
+          const titlebarRight = document.getElementById('opencode-titlebar-right');
+
+          if (titlebarRight) {
+            if (existingBtn) {
+              if (existingBtn.parentElement !== titlebarRight) {
+                titlebarRight.insertBefore(existingBtn, titlebarRight.firstChild);
+              }
+              return;
+            }
+
+            const btn = document.createElement('button');
+            btn.id = 'opencode-dashboard-btn';
+            btn.type = 'button';
+            btn.title = 'Abrir OpenCode Dashboard (http://localhost:3030/)';
+            btn.className = 'oc-native-titlebar-btn';
+            btn.innerHTML = \`
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="9"></rect>
+                <rect x="14" y="3" width="7" height="5"></rect>
+                <rect x="14" y="12" width="7" height="9"></rect>
+                <rect x="3" y="16" width="7" height="5"></rect>
+              </svg>
+              <span>Dashboard</span>
+            \`;
+
+            btn.addEventListener('click', function(e) {
+              e.stopPropagation();
+              e.preventDefault();
+              const targetUrl = 'http://localhost:3030/';
+              if (window.api && typeof window.api.openExternal === 'function') {
+                window.api.openExternal(targetUrl);
+              } else {
+                window.open(targetUrl, '_blank');
+              }
+            });
+
+            titlebarRight.insertBefore(btn, titlebarRight.firstChild);
+            return;
+          }
+
+          // Fallback caso a barra da direita ainda não esteja no DOM
+          const tabsScroll = document.querySelector('[data-slot="titlebar-tabs-scroll"]');
+          if (tabsScroll && !existingBtn) {
+            const btn = document.createElement('button');
+            btn.id = 'opencode-dashboard-btn';
+            btn.type = 'button';
+            btn.title = 'Abrir OpenCode Dashboard (http://localhost:3030/)';
+            btn.className = 'oc-native-titlebar-btn';
+            btn.innerHTML = \`
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="9"></rect>
+                <rect x="14" y="3" width="7" height="5"></rect>
+                <rect x="14" y="12" width="7" height="9"></rect>
+                <rect x="3" y="16" width="7" height="5"></rect>
+              </svg>
+              <span>Dashboard</span>
+            \`;
+
+            btn.addEventListener('click', function(e) {
+              e.stopPropagation();
+              e.preventDefault();
+              const targetUrl = 'http://localhost:3030/';
+              if (window.api && typeof window.api.openExternal === 'function') {
+                window.api.openExternal(targetUrl);
+              } else {
+                window.open(targetUrl, '_blank');
+              }
+            });
+
+            tabsScroll.appendChild(btn);
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', mountDashboardButton);
+        } else {
+          mountDashboardButton();
+        }
+
+        setInterval(mountDashboardButton, 1000);
+      })();
+    </script>
+  `;
+
+  html = html.replace('</body>', `${dashboardScript}\n</body>`);
   fs.writeFileSync(htmlPath, html, 'utf8');
-  console.log('✅ out/renderer/index.html preservado com injeção não-destrutiva.');
+  console.log('✅ out/renderer/index.html configurado com botão do Dashboard e injeção Liquid Glass.');
 }
 
 // =========================================================================
