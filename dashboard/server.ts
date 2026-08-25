@@ -634,8 +634,9 @@ function saveCrewAgent(crewId: string, agentData: any): any {
   const agentDir = join(crewFolder, "agents", cleanAgentName);
   mkdirSync(join(agentDir, "skills"), { recursive: true });
 
-  const isMaster = agentData.type === "primary" || agentData.type === "crew_master" || agentData.role?.toLowerCase().includes("líder") || agentData.role?.toLowerCase().includes("leader");
-  const isInitialPrompt = agentData.isInitialPrompt === true || agentData.initialPromptModel === true || agentData.mode === "primary";
+  const isPresident = cleanAgentName === "presidente";
+  const isMaster = isPresident || agentData.type === "primary" || agentData.type === "crew_master" || agentData.role?.toLowerCase().includes("líder") || agentData.role?.toLowerCase().includes("leader");
+  const isInitialPrompt = isPresident || agentData.isInitialPrompt === true || agentData.initialPromptModel === true || agentData.mode === "primary";
   const mode = isInitialPrompt ? "primary" : "subagent";
   const skills = Array.isArray(agentData.skills) ? agentData.skills : [];
   const mcps = Array.isArray(agentData.mcps) ? agentData.mcps : [];
@@ -701,7 +702,7 @@ function saveCrewAgent(crewId: string, agentData: any): any {
     mcps,
     orchestratorPrompt,
     custom_directory: customDir,
-    isInitialPrompt: isInitialPrompt || isMaster,
+    isInitialPrompt,
     schedule
   };
 
@@ -854,9 +855,12 @@ function buildYamlList(items: string[], indent = 2): string {
 }
 
 function buildCrewBeeAgentMd(agentName: string, agentData: any, crewMeta: any): string {
-  const isMaster = agentData.type === "primary" || agentData.mode === "primary";
-  const entry_exposure = (agentData.isInitialPrompt === true || isMaster) ? "user-selectable" : "internal-only";
-  const lane = agentData.lane || (isMaster ? "Orchestration & Leadership" : "Specialized Domain Execution");
+  const isPresident = agentName === "presidente";
+  const isInitialPrompt = isPresident || agentData.isInitialPrompt === true || agentData.mode === "primary";
+  const mode = isInitialPrompt ? "primary" : "subagent";
+  const isMaster = isPresident || agentData.type === "primary" || agentData.type === "crew_master";
+  const entry_exposure = isInitialPrompt ? "user-selectable" : "internal-only";
+  const lane = agentData.lane || (isPresident ? "Global Enterprise Governance & Meta-Orchestration" : (isMaster ? "Orchestration & Squad Leadership" : "Specialized Domain Execution"));
   const role = agentData.role || agentData.displayName || `Especialista ${agentName}`;
   const temperament = agentData.temperament || "adaptive";
   const cognitiveStyle = agentData.cognitiveStyle || (isMaster ? "scope-decide-synthesize" : "structure-execute-report");
@@ -876,11 +880,11 @@ kind: agent
 version: 1.0.0
 name: "${agentData.displayName || agentName}"
 role: "${role}"
-mode: ${agentData.mode || (isMaster ? "primary" : "subagent")}
+mode: ${mode}
 type: ${agentData.type || (isMaster ? "primary" : "subagent")}
 archetype: ${isMaster ? "leader-orchestrator" : "specialized-executor"}
 team: "${crewMeta?.id || "custom"}"
-tags: [${isMaster ? '"leader", "user-selectable"' : '"specialist", "subagent"'}]
+tags: [${isInitialPrompt ? '"user-selectable", ' : ''}${isMaster ? '"leader"' : '"specialist", "subagent"'}]
 
 # ── Slim Protocol ─────────────────────────────────────────────
 model: "${model}"
@@ -1488,6 +1492,7 @@ function getInstalledSkills(): any[] {
   // Helper para registrar uma skill encontrada
   function registerSkill(skillName: string, skillDir: string, category: string, originLabel: string, crewId: string | null = null) {
     if (!skillName || skillName.startsWith(".")) return;
+    if (skillDir && (skillDir.includes(".gemini") || skillDir.includes("gemini-api"))) return;
     const cleanName = skillName.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-');
     if (skillsMap.has(cleanName)) return;
 
@@ -1564,28 +1569,7 @@ function getInstalledSkills(): any[] {
     } catch {}
   }
 
-  // 3. Scan ~/.gemini/config/plugins/
-  const geminiPluginsDir = join(homedir(), ".gemini", "config", "plugins");
-  if (existsSync(geminiPluginsDir)) {
-    try {
-      const plugins = readdirSync(geminiPluginsDir, { withFileTypes: true });
-      for (const p of plugins) {
-        if (p.isDirectory()) {
-          const pSkillsDir = join(geminiPluginsDir, p.name, "skills");
-          if (existsSync(pSkillsDir)) {
-            const skEntries = readdirSync(pSkillsDir, { withFileTypes: true });
-            for (const sk of skEntries) {
-              if (sk.isDirectory()) {
-                registerSkill(sk.name, join(pSkillsDir, sk.name), "core", `Plugin: ${p.name}`);
-              }
-            }
-          }
-        }
-      }
-    } catch {}
-  }
-
-  // 4. Scan Full Crews Skills & Agent Skills
+  // 3. Scan Full Crews Skills & Agent Skills
   const crews = getFullCrews();
   for (const c of crews) {
     const crewSkillsFolder = join(FULL_CREWS_DIR, c.id, "skills");
