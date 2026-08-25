@@ -517,8 +517,8 @@ function renderCrewsTab() {
             <button class="btn-secondary" style="font-size: 11px; padding: 6px 10px;" onclick="openCreateCrewAgentModal('${escapeHtml(crew.id)}')">
               + Novo Agente
             </button>
-            <button class="btn-secondary" style="font-size: 11px; padding: 6px 10px;" onclick="openCreateCrewSkillModal('${escapeHtml(crew.id)}')">
-              + Nova Skill
+            <button class="btn-secondary" style="font-size: 11px; padding: 6px 10px; background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.35);" onclick="openCrewSkillPickerModal('${escapeHtml(crew.id)}')">
+              📦 Atribuir Skills
             </button>
             <button 
               class="btn-secondary" 
@@ -612,7 +612,7 @@ function renderCrewsTab() {
           <div class="crew-panel-card">
             <div class="crew-section-label">
               <span>Habilidades da Equipe (${crew.skills?.length || 0})</span>
-              <button class="btn-secondary" style="font-size: 9px; padding: 2px 6px;" onclick="openCreateCrewSkillModal('${escapeHtml(crew.id)}')">+ Skill</button>
+              <button class="btn-secondary" style="font-size: 9.5px; padding: 2px 8px; color: #c084fc; border-color: rgba(168,85,247,0.35);" onclick="openCrewSkillPickerModal('${escapeHtml(crew.id)}')">⚡ Gerenciar Skills</button>
             </div>
             <div class="skills-pill-row">
               ${(crew.skills || []).length > 0 
@@ -1111,6 +1111,7 @@ function openCrewAgentModal(crewId, agentName) {
 }
 
 function openEditCoreAgent(agentKey, currentModel) {
+  const existingAgent = allDiscoveredAgents.find(a => a.name === agentKey);
   const meta = PANTHEON_METADATA[agentKey] || {
     desc: `Agente Core @${agentKey}`,
     lane: 'Core OpenCode System Orchestration',
@@ -1130,26 +1131,26 @@ function openEditCoreAgent(agentKey, currentModel) {
 
   document.getElementById('modalCrewAgentName').value = agentKey;
   document.getElementById('modalCrewAgentName').disabled = true;
-  document.getElementById('modalCrewAgentDisplayName').value = `@${agentKey}`;
-  document.getElementById('modalCrewAgentRole').value = meta.desc || '';
-  document.getElementById('modalCrewAgentType').value = (agentKey === 'orchestrator' || agentKey === 'council') ? 'primary' : 'subagent';
+  document.getElementById('modalCrewAgentDisplayName').value = existingAgent?.displayName || `@${agentKey}`;
+  document.getElementById('modalCrewAgentRole').value = existingAgent?.role || existingAgent?.description || meta.desc || '';
+  document.getElementById('modalCrewAgentType').value = (agentKey === 'orchestrator' || agentKey === 'council' || existingAgent?.type === 'primary') ? 'primary' : 'subagent';
 
   // Initial Prompt Model Slot: Check whether it is active
-  const isInitialPrompt = (agentKey === 'orchestrator' || agentKey === 'council');
+  const isInitialPrompt = existingAgent ? (existingAgent.mode === 'primary' || existingAgent.mode === 'all' || existingAgent.isInitialPrompt === true) : (agentKey === 'orchestrator' || agentKey === 'council');
   const initialPromptCb = document.getElementById('modalCrewAgentInitialPrompt');
   if (initialPromptCb) {
     initialPromptCb.checked = isInitialPrompt;
     onInitialPromptToggleChange();
   }
 
-  document.getElementById('modalCrewAgentLane').value = meta.lane || '';
-  document.getElementById('modalCrewAgentPermissions').value = meta.perms || 'read_files, write_files';
-  document.getElementById('modalCrewAgentStats').value = meta.stats || '';
-  document.getElementById('modalCrewAgentVariant').value = 'default';
-  document.getElementById('modalCrewAgentOrchestratorPrompt').value = '';
+  document.getElementById('modalCrewAgentLane').value = existingAgent?.lane || meta.lane || '';
+  document.getElementById('modalCrewAgentPermissions').value = existingAgent?.permissions || meta.perms || 'read_files, write_files';
+  document.getElementById('modalCrewAgentStats').value = existingAgent?.stats || meta.stats || '';
+  document.getElementById('modalCrewAgentVariant').value = existingAgent?.variant || 'default';
+  document.getElementById('modalCrewAgentOrchestratorPrompt').value = existingAgent?.orchestratorPrompt || '';
 
   const selectModel = document.getElementById('modalCrewAgentModel');
-  if (selectModel) selectModel.value = currentModel || 'omniroute/combo/code';
+  if (selectModel) selectModel.value = existingAgent?.model || currentModel || 'omniroute/combo/code';
 
   document.getElementById('modalCrewAgentCustomDir').value = `/Users/mcp/.config/opencode/oh-my-opencode-slim/`;
 
@@ -1163,7 +1164,7 @@ function openEditCoreAgent(agentKey, currentModel) {
   document.getElementById('modalCrewAgentScheduleCron').value = '';
   document.getElementById('modalCrewAgentSchedulePrompt').value = '';
 
-  document.getElementById('modalCrewAgentPrompt').value = `# Core Agent @${agentKey}\n\n${meta.desc}`;
+  document.getElementById('modalCrewAgentPrompt').value = existingAgent?.prompt || `# Core Agent @${agentKey}\n\n${meta.desc}`;
 
   document.getElementById('modalCrewAgentAvatarImg').style.display = 'none';
   document.getElementById('modalCrewAgentAvatarPlaceholder').style.display = 'block';
@@ -1731,6 +1732,170 @@ async function submitCrewSkillForm() {
 }
 
 // =========================================================
+// SELETOR GLOBAL DE SKILLS DA CREW (ESTILO SET YOUR MODEL)
+// =========================================================
+
+let currentSkillPickerCrewId = null;
+let currentSkillPickerSelected = new Set();
+let currentSkillPickerCategory = 'all';
+
+function openCrewSkillPickerModal(crewId) {
+  currentSkillPickerCrewId = crewId;
+  const crew = fullCrewsList.find(c => c.id === crewId) || allDiscoveredCrews.find(c => c.id === crewId);
+  const crewTitle = crew ? crew.name : crewId;
+
+  const titleEl = document.getElementById('crewSkillPickerTitle');
+  if (titleEl) titleEl.textContent = `Atribuir Habilidades à Crew: ${crewTitle}`;
+
+  const subtitleEl = document.getElementById('crewSkillPickerSubtitle');
+  if (subtitleEl) subtitleEl.textContent = `Selecione quais skills do ecossistema estarão disponíveis para a equipe "${crewTitle}"`;
+
+  const searchInput = document.getElementById('crewSkillPickerSearch');
+  if (searchInput) searchInput.value = '';
+
+  currentSkillPickerCategory = 'all';
+  document.querySelectorAll('#crewSkillPickerModal .filter-pill').forEach(p => p.classList.remove('active'));
+  const allPill = document.getElementById('pickerFilterAll');
+  if (allPill) allPill.classList.add('active');
+
+  // Inicializa o conjunto com as skills já presentes na crew
+  currentSkillPickerSelected = new Set();
+  if (crew && Array.isArray(crew.skills)) {
+    crew.skills.forEach(sk => {
+      if (typeof sk === 'string') currentSkillPickerSelected.add(sk.toLowerCase());
+      else if (sk && sk.name) currentSkillPickerSelected.add(sk.name.toLowerCase());
+    });
+  }
+
+  renderCrewSkillPickerGrid();
+  document.getElementById('crewSkillPickerModal').style.display = 'flex';
+}
+
+function closeCrewSkillPickerModal() {
+  const modal = document.getElementById('crewSkillPickerModal');
+  if (modal) modal.style.display = 'none';
+  currentSkillPickerCrewId = null;
+  currentSkillPickerSelected.clear();
+}
+
+function setCrewSkillPickerCategory(category) {
+  currentSkillPickerCategory = category;
+  document.querySelectorAll('#crewSkillPickerModal .filter-pill').forEach(p => p.classList.remove('active'));
+  const btn = document.getElementById(`pickerFilter${category.charAt(0).toUpperCase() + category.slice(1)}`);
+  if (btn) btn.classList.add('active');
+  renderCrewSkillPickerGrid();
+}
+
+function filterCrewSkillPickerGrid() {
+  renderCrewSkillPickerGrid();
+}
+
+function renderCrewSkillPickerGrid() {
+  const container = document.getElementById('crewSkillPickerGrid');
+  if (!container) return;
+
+  const query = (document.getElementById('crewSkillPickerSearch')?.value || '').trim().toLowerCase();
+
+  let filtered = [...skillsList];
+
+  if (currentSkillPickerCategory === 'core') {
+    filtered = filtered.filter(s => s.category === 'core' || s.origin === 'core' || s.source === 'core' || s.path?.includes('oh-my-opencode-slim') || s.originLabel?.includes('Plugin'));
+  } else if (currentSkillPickerCategory === 'crew') {
+    filtered = filtered.filter(s => s.category === 'crew' || s.origin === 'crew' || s.source?.startsWith('crew'));
+  } else if (currentSkillPickerCategory === 'custom') {
+    filtered = filtered.filter(s => s.category === 'custom' || s.origin === 'custom' || (!s.path?.includes('oh-my-opencode-slim') && !s.originLabel?.includes('Plugin') && s.category !== 'crew'));
+  }
+
+  if (query) {
+    filtered = filtered.filter(s => s.name.toLowerCase().includes(query) || (s.description && s.description.toLowerCase().includes(query)));
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-dim); font-family: var(--font-mono);">Nenhuma habilidade encontrada para este filtro.</div>`;
+    updateCrewSkillPickerCounter();
+    return;
+  }
+
+  container.innerHTML = filtered.map(skill => {
+    const isSelected = currentSkillPickerSelected.has(skill.name.toLowerCase());
+    const isCrew = skill.category === 'crew' || skill.origin === 'crew' || (skill.path && skill.path.includes('full crews'));
+    const isCore = skill.category === 'core' || skill.origin === 'core' || (skill.path && skill.path.includes('oh-my-opencode-slim')) || skill.originLabel?.includes('Plugin');
+
+    let tagClass = 'custom';
+    let tagLabel = '✨ CUSTOM';
+    if (isCrew) {
+      tagClass = 'crew';
+      tagLabel = skill.crewId ? `👥 CREW: ${skill.crewId}` : '👥 CREW SKILL';
+    } else if (isCore) {
+      tagClass = 'core';
+      tagLabel = '⚙️ PLUGIN / CORE';
+    }
+
+    return `
+      <div class="crew-skill-picker-card ${isSelected ? 'is-selected' : ''}" onclick="toggleSkillPickerSelection('${escapeHtml(skill.name)}')">
+        <div class="skill-picker-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" ${isSelected ? 'checked' : ''} style="accent-color: #a855f7; width: 16px; height: 16px;" onclick="event.stopPropagation(); toggleSkillPickerSelection('${escapeHtml(skill.name)}')">
+            <span class="skill-picker-name">@${escapeHtml(skill.name)}</span>
+          </div>
+          <span class="tag-origin ${tagClass}" style="font-size: 9px; padding: 2px 6px;">${tagLabel}</span>
+        </div>
+        <p class="skill-picker-desc" title="${escapeHtml(skill.description)}">${escapeHtml(skill.description || 'Instruções operacionais especializadas.')}</p>
+        <div class="skill-picker-footer">
+          <span style="font-family: var(--font-mono); font-size: 9.5px; opacity: 0.7;">SKILL.md</span>
+          <span style="font-size: 10px; font-weight: 700; color: ${isSelected ? '#c084fc' : 'var(--text-dim)'};">${isSelected ? '✓ Atribuída' : '+ Atribuir'}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  updateCrewSkillPickerCounter();
+}
+
+function toggleSkillPickerSelection(skillName) {
+  const clean = skillName.toLowerCase();
+  if (currentSkillPickerSelected.has(clean)) {
+    currentSkillPickerSelected.delete(clean);
+  } else {
+    currentSkillPickerSelected.add(clean);
+  }
+  renderCrewSkillPickerGrid();
+}
+
+function updateCrewSkillPickerCounter() {
+  const count = currentSkillPickerSelected.size;
+  const countEl = document.getElementById('crewSkillPickerCounter');
+  if (countEl) {
+    countEl.textContent = `${count} ${count === 1 ? 'habilidade selecionada' : 'habilidades selecionadas'}`;
+  }
+}
+
+async function saveCrewAssignedSkills() {
+  if (!currentSkillPickerCrewId) return;
+
+  const skillNames = Array.from(currentSkillPickerSelected);
+
+  try {
+    const res = await fetch(`/api/crews/${currentSkillPickerCrewId}/skills/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ skillNames })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Habilidades da equipe sincronizadas com sucesso (${skillNames.length})!`);
+      closeCrewSkillPickerModal();
+      await fetchState();
+    } else {
+      showToast('Erro: ' + (data.error || 'Falha ao sincronizar'));
+    }
+  } catch (err) {
+    showToast('Erro de rede: ' + err.message);
+  }
+}
+
+// =========================================================
 // AGENTS STUDIO & COMPLETE DISCOVERY
 // =========================================================
 
@@ -2080,14 +2245,26 @@ function setSkillsViewMode(mode) {
 
 function applySkillsFilter() {
   const query = (document.getElementById('skillsSearchInput')?.value || '').toLowerCase().trim();
+  
+  // Atualiza contadores dos pills
+  const countAll = skillsList.length;
+  const countCrew = skillsList.filter(s => s.source === 'crew' || s.category === 'crew' || (s.path && s.path.includes('full crews'))).length;
+  const countCore = skillsList.filter(s => s.source === 'core' || s.category === 'core' || s.path?.includes('oh-my-opencode-slim') || s.originLabel?.includes('Plugin')).length;
+  const countCustom = skillsList.filter(s => s.category === 'custom' || (!s.path?.includes('oh-my-opencode-slim') && !s.originLabel?.includes('Plugin') && s.category !== 'crew')).length;
+
+  if (document.getElementById('countSkillsAll')) document.getElementById('countSkillsAll').textContent = countAll;
+  if (document.getElementById('countSkillsCrew')) document.getElementById('countSkillsCrew').textContent = countCrew;
+  if (document.getElementById('countSkillsCore')) document.getElementById('countSkillsCore').textContent = countCore;
+  if (document.getElementById('countSkillsCustom')) document.getElementById('countSkillsCustom').textContent = countCustom;
+
   let filtered = skillsList;
 
   if (currentSkillCategoryFilter === 'crew') {
     filtered = filtered.filter(s => s.source === 'crew' || s.category === 'crew' || (s.path && s.path.includes('full crews')));
   } else if (currentSkillCategoryFilter === 'custom') {
-    filtered = filtered.filter(s => s.source === 'custom' || s.category === 'custom' || (!s.path?.includes('oh-my-opencode-slim') && !s.path?.includes('full crews')));
+    filtered = filtered.filter(s => s.category === 'custom' || (!s.path?.includes('oh-my-opencode-slim') && !s.originLabel?.includes('Plugin') && s.category !== 'crew'));
   } else if (currentSkillCategoryFilter === 'core') {
-    filtered = filtered.filter(s => s.source === 'core' || s.category === 'core' || s.path?.includes('oh-my-opencode-slim'));
+    filtered = filtered.filter(s => s.source === 'core' || s.category === 'core' || s.path?.includes('oh-my-opencode-slim') || s.originLabel?.includes('Plugin'));
   }
 
   if (query) {
@@ -2741,6 +2918,7 @@ function closeAnyModal(modalEl) {
   else if (id === 'crewAgentModal') closeCrewAgentModal();
   else if (id === 'crewMuralModal') closeCrewMuralModal();
   else if (id === 'crewSkillModal') closeCrewSkillModal();
+  else if (id === 'crewSkillPickerModal') closeCrewSkillPickerModal();
   else if (id === 'agentModal') closeAgentModal();
   else if (id === 'skillModal') closeSkillModal();
   else if (id === 'agentRoutingModal') closeAgentRoutingModal();

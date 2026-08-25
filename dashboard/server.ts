@@ -812,6 +812,59 @@ function deleteCrewSkill(crewId: string, skillName: string, agentName?: string):
   return false;
 }
 
+function syncCrewSkills(crewId: string, skillNames: string[]): any {
+  const crewFolder = join(FULL_CREWS_DIR, crewId);
+  const crewSkillsDir = join(crewFolder, "skills");
+  if (!existsSync(crewSkillsDir)) mkdirSync(crewSkillsDir, { recursive: true });
+
+  const allSkills = getInstalledSkills();
+  const allSkillsMap = new Map<string, any>();
+  for (const s of allSkills) {
+    allSkillsMap.set(s.name, s);
+  }
+
+  const activeSkillSet = new Set<string>();
+  for (const rawName of skillNames) {
+    const cleanName = (rawName || "").trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-');
+    if (!cleanName) continue;
+    activeSkillSet.add(cleanName);
+
+    const targetFolder = join(crewSkillsDir, cleanName);
+    mkdirSync(targetFolder, { recursive: true });
+    const targetSkillFile = join(targetFolder, "SKILL.md");
+
+    const existingSkill = allSkillsMap.get(cleanName) || allSkillsMap.get(rawName);
+    if (existingSkill && existingSkill.content) {
+      writeFileSync(targetSkillFile, existingSkill.content, "utf-8");
+    } else if (!existsSync(targetSkillFile)) {
+      const defaultContent = `---\nname: ${cleanName}\ndescription: Habilidade da equipe ${crewId}\n---\n\n# ${cleanName.toUpperCase()}\n\nDiretrizes operacionais desta habilidade para a equipe.`;
+      writeFileSync(targetSkillFile, defaultContent, "utf-8");
+    }
+  }
+
+  // Remove skills que foram desmarcadas
+  try {
+    const existingEntries = readdirSync(crewSkillsDir, { withFileTypes: true });
+    for (const ent of existingEntries) {
+      if (ent.isDirectory() && !activeSkillSet.has(ent.name)) {
+        rmSync(join(crewSkillsDir, ent.name), { recursive: true, force: true });
+      }
+    }
+  } catch {}
+
+  // Atualiza crew.json
+  try {
+    const crewJsonPath = join(crewFolder, "crew.json");
+    if (existsSync(crewJsonPath)) {
+      const crewJson = JSON.parse(readFileSync(crewJsonPath, "utf-8"));
+      crewJson.skills = Array.from(activeSkillSet);
+      writeFileSync(crewJsonPath, JSON.stringify(crewJson, null, 2), "utf-8");
+    }
+  } catch {}
+
+  return { success: true, count: activeSkillSet.size, skills: Array.from(activeSkillSet) };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SCHEDULED TASK RUNNER (Background Cron & Immediate Dispatcher)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1080,67 +1133,133 @@ function getInstalledAgents(): any[] {
 function getInstalledSkills(): any[] {
   const skillsMap = new Map<string, any>();
 
-  // 1. Scan filesystem ~/.config/opencode/skills/ (Custom & User config)
+  // Helper para registrar uma skill encontrada
+  function registerSkill(skillName: string, skillDir: string, category: string, originLabel: string, crewId: string | null = null) {
+    if (!skillName || skillName.startsWith(".")) return;
+    const cleanName = skillName.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-');
+    if (skillsMap.has(cleanName)) return;
+
+    const skillFilePath = join(skillDir, "SKILL.md");
+    const skillFilePathLower = join(skillDir, "skill.md");
+    const readmeFilePath = join(skillDir, "README.md");
+    let description = `Habilidade especializada '${cleanName}'`;
+    let content = "";
+    let effectivePath = skillFilePath;
+
+    if (existsSync(skillFilePath)) {
+      content = readFileSync(skillFilePath, "utf-8");
+      effectivePath = skillFilePath;
+    } else if (existsSync(skillFilePathLower)) {
+      content = readFileSync(skillFilePathLower, "utf-8");
+      effectivePath = skillFilePathLower;
+    } else if (existsSync(readmeFilePath)) {
+      content = readFileSync(readmeFilePath, "utf-8");
+      effectivePath = readmeFilePath;
+    }
+
+    if (content) {
+      const descMatch = content.match(/description:\s*(.*?)(?:\n---|\n[a-z_]+:)/s) || content.match(/description:\s*(.*)/);
+      if (descMatch && descMatch[1]) {
+        description = descMatch[1].trim().replace(/\n/g, " ").replace(/^["']|["']$/g, "");
+      } else {
+        description = content.slice(0, 120).replace(/[#*`]/g, "").trim();
+      }
+    }
+
+    skillsMap.set(cleanName, {
+      name: cleanName,
+      description,
+      content,
+      path: effectivePath,
+      folderPath: skillDir,
+      hasSkillFile: existsSync(effectivePath),
+      category,
+      origin: category,
+      originLabel,
+      crewId,
+      source: category === "crew" ? `crew:${crewId}` : category
+    });
+  }
+
+  // 1. Scan ~/.config/opencode/skills/
   if (existsSync(SKILLS_DIR_PATH)) {
     try {
       const entries = readdirSync(SKILLS_DIR_PATH, { withFileTypes: true });
       for (const entry of entries) {
         if (entry.isDirectory()) {
-          const skillName = entry.name;
-          const skillDir = join(SKILLS_DIR_PATH, skillName);
-          const skillFilePath = join(skillDir, "SKILL.md");
-          const readmeFilePath = join(skillDir, "README.md");
-          let description = `Habilidade especializada '${skillName}'`;
-          let content = "";
-
-          if (existsSync(skillFilePath)) {
-            content = readFileSync(skillFilePath, "utf-8");
-            const descMatch = content.match(/description:\s*(.*?)(?:\n---|\n[a-z_]+:)/s) || content.match(/description:\s*(.*)/);
-            if (descMatch && descMatch[1]) {
-              description = descMatch[1].trim().replace(/\n/g, " ").replace(/^["']|["']$/g, "");
-            }
-          } else if (existsSync(readmeFilePath)) {
-            content = readFileSync(readmeFilePath, "utf-8");
-            description = content.slice(0, 120).replace(/[#*`]/g, "").trim();
-          }
-
-          const isCorePlugin = skillName === "oh-my-opencode-slim";
-
-          skillsMap.set(skillName, {
-            name: skillName,
-            description,
-            content,
-            path: skillFilePath,
-            folderPath: skillDir,
-            hasSkillFile: existsSync(skillFilePath),
-            category: isCorePlugin ? "core" : "custom",
-            origin: isCorePlugin ? "plugin" : "custom",
-            originLabel: isCorePlugin ? "Plugin: oh-my-opencode-slim" : "Custom / Manual",
-            source: "user_config"
-          });
+          const isCorePlugin = entry.name === "oh-my-opencode-slim";
+          registerSkill(
+            entry.name,
+            join(SKILLS_DIR_PATH, entry.name),
+            isCorePlugin ? "core" : "custom",
+            isCorePlugin ? "Plugin: oh-my-opencode-slim" : "Custom / Manual"
+          );
         }
       }
     } catch {}
   }
 
-  // 2. Scan skills from Full Crews
+  // 2. Scan oh-my-opencode-slim/skills/
+  const slimSkillsDir = join(homedir(), ".config", "opencode", "oh-my-opencode-slim", "skills");
+  if (existsSync(slimSkillsDir)) {
+    try {
+      const entries = readdirSync(slimSkillsDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          registerSkill(entry.name, join(slimSkillsDir, entry.name), "core", "Plugin: oh-my-opencode-slim");
+        }
+      }
+    } catch {}
+  }
+
+  // 3. Scan ~/.gemini/config/plugins/
+  const geminiPluginsDir = join(homedir(), ".gemini", "config", "plugins");
+  if (existsSync(geminiPluginsDir)) {
+    try {
+      const plugins = readdirSync(geminiPluginsDir, { withFileTypes: true });
+      for (const p of plugins) {
+        if (p.isDirectory()) {
+          const pSkillsDir = join(geminiPluginsDir, p.name, "skills");
+          if (existsSync(pSkillsDir)) {
+            const skEntries = readdirSync(pSkillsDir, { withFileTypes: true });
+            for (const sk of skEntries) {
+              if (sk.isDirectory()) {
+                registerSkill(sk.name, join(pSkillsDir, sk.name), "core", `Plugin: ${p.name}`);
+              }
+            }
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // 4. Scan Full Crews Skills & Agent Skills
   const crews = getFullCrews();
   for (const c of crews) {
-    for (const sk of c.skills) {
-      if (!skillsMap.has(sk.name)) {
-        skillsMap.set(sk.name, {
-          name: sk.name,
-          description: sk.description,
-          content: sk.content,
-          path: `full crews/${c.id}/skills/${sk.name}`,
-          folderPath: join(FULL_CREWS_DIR, c.id, "skills", sk.name),
-          hasSkillFile: true,
-          category: "crew",
-          origin: "crew",
-          originLabel: `Crew: ${c.name}`,
-          crewId: c.id,
-          source: `crew:${c.id}`
-        });
+    const crewSkillsFolder = join(FULL_CREWS_DIR, c.id, "skills");
+    if (existsSync(crewSkillsFolder)) {
+      try {
+        const entries = readdirSync(crewSkillsFolder, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory()) {
+            registerSkill(entry.name, join(crewSkillsFolder, entry.name), "crew", `Crew: ${c.name}`, c.id);
+          }
+        }
+      } catch {}
+    }
+
+    // Agent level skills
+    for (const a of c.agents) {
+      const agentSkillsFolder = join(FULL_CREWS_DIR, c.id, "agents", a.name, "skills");
+      if (existsSync(agentSkillsFolder)) {
+        try {
+          const entries = readdirSync(agentSkillsFolder, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isDirectory()) {
+              registerSkill(entry.name, join(agentSkillsFolder, entry.name), "crew", `Crew: ${c.name} (@${a.name})`, c.id);
+            }
+          }
+        } catch {}
       }
     }
   }
@@ -1505,6 +1624,18 @@ const server = serve({
         return Response.json(result);
       } catch (err: any) {
         return Response.json({ error: err.message }, { status: 500 });
+      }
+    }
+
+    // Sync / Assign Skills to Crew
+    if (url.pathname.match(/^\/api\/crews\/[^/]+\/skills\/sync$/) && req.method === "POST") {
+      try {
+        const crewId = url.pathname.split("/")[3];
+        const body = await req.json();
+        const result = syncCrewSkills(crewId, body.skillNames || []);
+        return Response.json(result);
+      } catch (err: any) {
+        return Response.json({ error: err.message }, { status: 400 });
       }
     }
 
