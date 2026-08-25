@@ -1253,6 +1253,50 @@ function closeCrewAgentModal() {
   document.getElementById('crewAgentModal').style.display = 'none';
 }
 
+// ── CrewBee Engine: Sync manifestos (TEAM.md + AGENTS.md) da crew atual ──────
+async function syncCurrentCrewManifests() {
+  const crewId = document.getElementById('modalCrewAgentCrewId')?.value;
+  if (!crewId || crewId === 'none') {
+    showToast('Selecione uma crew primeiro para sincronizar os manifestos.', 'warning');
+    return;
+  }
+  try {
+    const res = await fetch(`/api/crews/${crewId}/sync-manifests`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`🐝 ${data.message}`, 'success');
+    } else {
+      showToast(data.error || 'Erro ao sincronizar manifestos', 'error');
+    }
+  } catch (e) {
+    showToast('Erro de comunicação com o servidor', 'error');
+  }
+}
+
+// ── CrewBee Section: Toggle collapse ─────────────────────────────────────────
+function toggleCrewBeeSection(header) {
+  const section = header.closest('.crewbee-section');
+  if (section) section.classList.toggle('is-open');
+}
+
+// ── Toggle Crew no OpenCode (crewbee.json) ────────────────────────────────────
+async function toggleCrewInOpenCode(crewId, currentEnabled) {
+  try {
+    const res = await fetch(`/api/crews/${crewId}/toggle-opencode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: !currentEnabled })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const status = data.enabled ? 'ativada' : 'desativada';
+      showToast(`Crew ${crewId} ${status} no OpenCode (crewbee.json)`, 'success');
+      return data.enabled;
+    }
+  } catch {}
+  return currentEnabled;
+}
+
 function populateCrewAgentModalOptions(crewId) {
   // 1. Models
   const selectModel = document.getElementById('modalCrewAgentModel');

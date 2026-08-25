@@ -637,7 +637,6 @@ function saveCrewAgent(crewId: string, agentData: any): any {
   const isMaster = agentData.type === "primary" || agentData.type === "crew_master" || agentData.role?.toLowerCase().includes("líder") || agentData.role?.toLowerCase().includes("leader");
   const isInitialPrompt = agentData.isInitialPrompt === true || agentData.initialPromptModel === true || agentData.mode === "primary";
   const mode = isInitialPrompt ? "primary" : "subagent";
-  const subagents = Array.isArray(agentData.subagents) ? agentData.subagents : [];
   const skills = Array.isArray(agentData.skills) ? agentData.skills : [];
   const mcps = Array.isArray(agentData.mcps) ? agentData.mcps : [];
   const model = agentData.model || "omniroute/combo/code";
@@ -676,10 +675,19 @@ function saveCrewAgent(crewId: string, agentData: any): any {
     next_run: isScheduleEnabled ? calculateNextRun(rawSchedule) : null
   };
 
-  const frontmatter = {
-    name: agentData.displayName || cleanAgentName,
+  // Load crew metadata for CrewBee manifest context
+  let crewMeta: any = { id: cleanCrewId, name: cleanCrewId };
+  try {
+    const crewJsonPath = join(crewFolder, "crew.json");
+    if (existsSync(crewJsonPath)) crewMeta = JSON.parse(readFileSync(crewJsonPath, "utf-8"));
+  } catch {}
+
+  // Build agent data for CrewBee schema generator
+  const agentForCrewBee = {
+    ...agentData,
+    displayName: agentData.displayName || cleanAgentName,
     role: agentData.role || `Especialista ${cleanAgentName}`,
-    mode: mode,
+    mode,
     type: isMaster ? "primary" : (agentData.type || "subagent"),
     lane,
     permissions,
@@ -687,54 +695,18 @@ function saveCrewAgent(crewId: string, agentData: any): any {
     variant,
     temperature,
     master: isMaster ? null : (agentData.master || null),
-    subagents: isMaster ? subagents : [],
+    subagents: isMaster ? (Array.isArray(agentData.subagents) ? agentData.subagents : []) : [],
     model,
     skills,
     mcps,
     orchestratorPrompt,
     custom_directory: customDir,
+    isInitialPrompt: isInitialPrompt || isMaster,
     schedule
   };
 
-  const nameStr = (frontmatter.name || cleanAgentName || "").toString().replace(/"/g, '\\"');
-  const roleStr = (frontmatter.role || `Especialista ${cleanAgentName}`).toString().replace(/"/g, '\\"');
-  const customDirStr = (frontmatter.custom_directory || agentDir).toString().replace(/"/g, '\\"');
-  const taskPromptStr = (schedule.task_prompt || "").toString().replace(/"/g, '\\"');
-
-  const mdContent = `---
-name: "${nameStr}"
-role: "${roleStr}"
-mode: ${frontmatter.mode}
-type: ${frontmatter.type}
-lane: "${frontmatter.lane.replace(/"/g, '\\"')}"
-permissions: "${frontmatter.permissions}"
-stats: "${frontmatter.stats.replace(/"/g, '\\"')}"
-variant: "${frontmatter.variant}"
-temperature: ${frontmatter.temperature}
-master: ${frontmatter.master ? `"${frontmatter.master}"` : "null"}
-subagents: [${frontmatter.subagents.map(s => `"${s}"`).join(", ")}]
-model: "${frontmatter.model}"
-skills: [${frontmatter.skills.map(s => `"${s}"`).join(", ")}]
-mcps: [${frontmatter.mcps.map(m => `"${m}"`).join(", ")}]
-orchestratorPrompt: |
-${frontmatter.orchestratorPrompt.split('\n').map(line => '  ' + line).join('\n')}
-custom_directory: "${customDirStr}"
-schedule:
-  enabled: ${schedule.enabled === true}
-  frequency: "${schedule.frequency}"
-  datetime: "${schedule.datetime}"
-  interval_hours: ${schedule.interval_hours}
-  time: "${schedule.time}"
-  weekdays: [${schedule.weekdays.join(", ")}]
-  month_day: ${schedule.month_day}
-  cron_expr: "${schedule.cron_expr}"
-  task_prompt: "${taskPromptStr}"
-  status: "${schedule.status}"
-  last_run: ${schedule.last_run ? `"${schedule.last_run}"` : "null"}
-  next_run: ${schedule.next_run ? `"${schedule.next_run}"` : "null"}
----
-
-${agentData.prompt || `# @${cleanAgentName}\n\nInstruções especializadas do agente ${nameStr}.`}`;
+  // Use CrewBee Engine to generate the agent.md with full schema
+  const mdContent = buildCrewBeeAgentMd(cleanAgentName, agentForCrewBee, crewMeta);
 
   writeFileSync(join(agentDir, "agent.md"), mdContent, "utf-8");
 
@@ -746,7 +718,7 @@ ${agentData.prompt || `# @${cleanAgentName}\n\nInstruções especializadas do ag
 
   // Synchronize with oh-my-opencode-slim.json schema
   syncAgentToOhMyOpenCodeSlim(cleanAgentName, {
-    ...frontmatter,
+    ...agentForCrewBee,
     prompt: agentData.prompt || ""
   });
 
@@ -762,10 +734,16 @@ ${agentData.prompt || `# @${cleanAgentName}\n\nInstruções especializadas do ag
     }
   } catch {}
 
+  // Regenerate CrewBee manifests (TEAM.md + AGENTS.md) after every agent save
+  try { syncCrewManifests(cleanCrewId); } catch {}
+
+  console.log(`✅ [CrewBee Engine] Agente @${cleanAgentName} salvo com schema completo (mode: ${mode})`);
+
   return { name: cleanAgentName, path: join(agentDir, "agent.md"), schedule, lane, permissions, stats };
 }
 
 function deleteCrewAgent(crewId: string, agentName: string): boolean {
+
   const agentDir = join(FULL_CREWS_DIR, crewId, "agents", agentName);
   if (existsSync(agentDir)) {
     rmSync(agentDir, { recursive: true, force: true });
@@ -866,8 +844,382 @@ function syncCrewSkills(crewId: string, skillNames: string[]): any {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CREWBEE ENGINE — Gerador de manifests TEAM.md e *.agent.md
+// Compatível com o schema CrewBee (https://github.com/CrewBeeLab/CrewBee)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function buildYamlList(items: string[], indent = 2): string {
+  if (!items || items.length === 0) return "[]";
+  return "\n" + items.map(i => " ".repeat(indent) + "- " + i).join("\n");
+}
+
+function buildCrewBeeAgentMd(agentName: string, agentData: any, crewMeta: any): string {
+  const isMaster = agentData.type === "primary" || agentData.mode === "primary";
+  const entry_exposure = (agentData.isInitialPrompt === true || isMaster) ? "user-selectable" : "internal-only";
+  const lane = agentData.lane || (isMaster ? "Orchestration & Leadership" : "Specialized Domain Execution");
+  const role = agentData.role || agentData.displayName || `Especialista ${agentName}`;
+  const temperament = agentData.temperament || "adaptive";
+  const cognitiveStyle = agentData.cognitiveStyle || (isMaster ? "scope-decide-synthesize" : "structure-execute-report");
+  const riskPosture = agentData.riskPosture || "evidence-aware";
+  const communicationStyle = agentData.communicationStyle || "concise-adaptive";
+  const variant = agentData.variant || "default";
+  const model = agentData.model || "omniroute/combo/code";
+  const skills = Array.isArray(agentData.skills) ? agentData.skills : [];
+  const mcps = Array.isArray(agentData.mcps) ? agentData.mcps : [];
+  const orchestratorPrompt = (agentData.orchestratorPrompt || "").trim();
+  const prompt = (agentData.prompt || "").trim();
+  const schedule = agentData.schedule || {};
+
+  const frontmatter = `---
+id: ${agentName}
+kind: agent
+version: 1.0.0
+name: "${agentData.displayName || agentName}"
+role: "${role}"
+mode: ${agentData.mode || (isMaster ? "primary" : "subagent")}
+type: ${agentData.type || (isMaster ? "primary" : "subagent")}
+archetype: ${isMaster ? "leader-orchestrator" : "specialized-executor"}
+team: "${crewMeta?.id || "custom"}"
+tags: [${isMaster ? '"leader", "user-selectable"' : '"specialist", "subagent"'}]
+
+# ── Slim Protocol ─────────────────────────────────────────────
+model: "${model}"
+variant: "${variant}"
+temperature: ${agentData.temperature ?? 0.2}
+skills: [${skills.map((s: string) => `"${s}"`).join(", ")}]
+mcps: [${mcps.map((m: string) => `"${m}"`).join(", ")}]
+lane: "${lane}"
+permissions: "${agentData.permissions || "read_files, write_files"}"
+stats: "${agentData.stats || (isMaster ? "5x decision quality" : "2x faster execution")}"
+master: ${agentData.master ? `"${agentData.master}"` : "null"}
+subagents: [${(Array.isArray(agentData.subagents) ? agentData.subagents : []).map((s: string) => `"${s}"`).join(", ")}]
+custom_directory: "${agentData.custom_directory || ""}"
+orchestratorPrompt: |
+${orchestratorPrompt.split("\n").map((l: string) => "  " + l).join("\n")}
+
+# ── CrewBee Schema ─────────────────────────────────────────────
+persona_core:
+  temperament: ${temperament}
+  cognitive_style: ${cognitiveStyle}
+  risk_posture: ${riskPosture}
+  communication_style: ${communicationStyle}
+  persistence_style: steady
+  decision_priorities:
+    - usefulness
+    - correctness
+    - clarity
+    - efficiency
+
+responsibility_core:
+  description: "${role} da equipe ${crewMeta?.name || ""}."
+  objective: "Executar com excelência as responsabilidades de ${lane}."
+  authority: "${isMaster ? "Orquestrar os especialistas da equipe e tomar decisões de roteamento." : "Executar tarefas delimitadas dentro de " + lane + "."}"
+
+collaboration:
+  default_consults: ${isMaster ? buildYamlList((Array.isArray(agentData.subagents) ? agentData.subagents : [])) : "[]"}
+  default_handoffs: ${isMaster ? "[]" : buildYamlList(["leader"])}
+
+core_principle:
+  - Entregar com qualidade e precisão dentro do escopo definido.
+  - Nunca inventar dados, evidências ou resultados de ferramentas.
+  - ${isMaster ? "Manter um dono ativo do contexto e convergir todo trabalho intermediário em uma resposta final coerente." : "Executar a tarefa delegada e retornar ao líder com resultado claro."}
+
+scope_control:
+  - Trabalhar dentro do escopo delimitado da missão da equipe.
+  - Não realizar ações destrutivas ou com efeitos externos sem aprovação explícita.
+  - Reportar suposições e limitações de evidência quando relevantes.
+
+ambiguity_policy:
+  - Resolver ambiguidades menores com o default mais útil.
+  - Fazer uma pergunta de clarificação precisa apenas quando a ambiguidade muda materialmente o resultado.
+
+task_triage:
+  trivial:
+    default_action: responder diretamente com raciocínio conciso
+  non_trivial:
+    default_action: planejar antes de executar e verificar ao final
+  ambiguous:
+    default_action: assumir o default mais útil e mencionar a suposição
+
+completion_gate:
+  - A resposta ou artefato satisfaz o objetivo solicitado.
+  - Fatos importantes estão suportados, qualificados ou marcados como suposições.
+  - Limitações de fonte, acesso ou verificação são declaradas quando relevantes.
+
+failure_recovery:
+  - Se um caminho de busca ou análise está vazio, mudar a estratégia antes de desistir.
+  - Se a tarefa não pode ser completada com as informações disponíveis, fornecer a melhor resposta delimitada e o que está faltando.
+
+guardrails:
+  critical:
+    - Nunca fabricar fontes, citações, arquivos, dados ou resultados de ações.
+    - Nunca realizar ações destrutivas ou externamente visíveis sem aprovação.
+    - Manter a incerteza visível quando evidências estão incompletas.
+
+tool_skill_strategy:
+  principles:
+    - Usar ferramentas diretas para tarefas disponíveis localmente.
+    - Preferir fontes primárias para trabalho factual.
+  preferred_order:
+    - resposta direta do contexto fornecido
+    - read / grep / glob para material local
+    - delegação para suporte de pesquisa ou produção
+
+entry_point:
+  exposure: ${entry_exposure}
+  selection_description: "${role} — ${lane}"
+  selection_priority: ${isMaster ? 0 : 10}
+
+prompt_projection:
+  include:
+    - persona_core
+    - responsibility_core.description
+    - responsibility_core.objective
+    - core_principle
+    - scope_control
+    - task_triage
+    - completion_gate
+    - failure_recovery
+    - guardrails.critical
+    - tool_skill_strategy.principles
+  exclude:
+    - entry_point
+    - runtime_config
+    - responsibility_core.use_when
+    - responsibility_core.avoid_when
+
+# ── Agendamento ────────────────────────────────────────────────
+schedule:
+  enabled: ${schedule.enabled === true}
+  frequency: "${schedule.frequency || "daily"}"
+  datetime: "${schedule.datetime || ""}"
+  interval_hours: ${schedule.interval_hours || 1}
+  time: "${schedule.time || "09:00"}"
+  weekdays: [${(schedule.weekdays || [1,2,3,4,5]).join(", ")}]
+  month_day: ${schedule.month_day || 1}
+  cron_expr: "${schedule.cron_expr || ""}"
+  task_prompt: "${(schedule.task_prompt || "").replace(/"/g, '\\"')}"
+  status: "${schedule.status || "idle"}"
+  last_run: ${schedule.last_run ? `"${schedule.last_run}"` : "null"}
+  next_run: ${schedule.next_run ? `"${schedule.next_run}"` : "null"}
+---
+
+${prompt || `# @${agentName}\n\nInstruções especializadas do agente. Edite este campo no Dashboard.`}`;
+
+  return frontmatter;
+}
+
+function generateTeamMd(crewData: any): string {
+  const id = crewData.id || "custom-team";
+  const name = crewData.name || id;
+  const description = crewData.description || `Equipe de agentes autônomos ${name}.`;
+  const leader = crewData.leader || null;
+  const agents: any[] = crewData.agents || [];
+  const modelPreset = crewData.modelPreset || "omniroute";
+
+  const memberLines = agents.map((a: any) => {
+    const isLeader = a.name === leader;
+    return `- \`${a.name}\` (${isLeader ? "**Líder**" : "Especialista"}): ${a.role || a.displayName || a.name}`;
+  }).join("\n");
+
+  const agentRuntimeLines = agents.map((a: any) => {
+    return `  ${a.name}:\n    model: "${a.model || "omniroute/combo/code"}"\n    variant: "${a.variant || "default"}"\n    skills: [${(a.skills || []).map((s: string) => `"${s}"`).join(", ")}]`;
+  }).join("\n");
+
+  return `# ${name}
+
+## Purpose
+
+\`${id}\` is a customizable Agent Team for the CrewBee Dashboard. It runs exclusively on localhost via OpenCode and can be configured for any domain — from engineering and marketing to research and content production.
+
+**Model Preset:** \`${modelPreset}\`
+**Created:** ${crewData.createdAt || new Date().toISOString()}
+**Updated:** ${new Date().toISOString()}
+
+## Mission
+
+${description}
+
+## Team Roles
+
+${leader ? `- **Leader** (\`${leader}\`): Entry point, orchestrator and final context owner.\n` : ""}${memberLines || "- No agents configured yet. Add agents in the Dashboard."}
+
+## Scope
+
+**In Scope:**
+- Tasks delegated by the user or orchestrator to this team's domain.
+- Internal collaboration between leader and specialist agents.
+
+**Out of Scope:**
+- Destructive, irreversible, or externally visible actions without explicit user approval.
+- Tasks outside this team's defined mission.
+
+## Workflow
+
+1. Leader receives the user task and decides: direct answer, research, delegate, or clarify.
+2. Leader routes to specialists when their domain improves quality.
+3. Specialists execute bounded, scoped tasks and return artifacts.
+4. Leader synthesizes and delivers the final response.
+
+## Governance
+
+- **Instruction Precedence:** team-policy → agent-profile → user-instruction
+- **Approval Required For:** delete, publish, commit, send, purchase
+- **Quality Floor:** scope-fit + factual-consistency before delivery
+- **Forbidden Actions:** fabrication, unauthorized external effects, claiming unavailable data
+
+## Agent Runtime
+
+\`\`\`yaml
+${agentRuntimeLines || "# No agents configured"}
+\`\`\`
+
+## Tags
+
+${[id, modelPreset, "crewbee-dashboard", "opencode", "localhost"].map(t => `\`${t}\``).join(", ")}
+
+## File Layout
+
+\`\`\`
+full crews/${id}/
+  crew.json         # Crew metadata
+  TEAM.md           # This file — CrewBee team manifest
+  AGENTS.md         # Governance policy (CrewBee TeamPolicySpec)
+  agents/           # Agent directories with agent.md files
+  skills/           # Team-level shared skills
+  mural/            # Mural instructions and media
+  mcp/              # MCP tool configurations
+\`\`\`
+
+---
+*Generated by CrewBee Dashboard. Edit in [http://localhost:3030](http://localhost:3030)*
+`;
+}
+
+function generateAgentsPolicyMd(crewData: any): string {
+  const name = crewData.name || crewData.id || "Team";
+  return `---
+id: ${crewData.id || "custom"}-policy
+kind: team-policy
+version: 1.0.0
+---
+
+# ${name} — Team Policy
+
+## Instruction Precedence
+
+1. team-policy (this document)
+2. agent-profile (individual .agent.md files)
+3. user-instruction (runtime user message)
+
+## Approval Policy
+
+**Required For:**
+- Deleting files, databases, or records
+- Publishing, sending, or committing without review
+- Purchasing or billing operations
+- Accessing sensitive private data
+
+**May Assume Without Asking:**
+- Reading and analyzing local files
+- Creating drafts and intermediate artifacts
+- Running safe read-only commands
+
+## Forbidden Actions
+
+- Fabricating data, sources, citations, or tool results
+- Performing irreversible external actions without explicit approval
+- Claiming access to unavailable private information
+- Bypassing the leader's final synthesis for complex multi-step tasks
+
+## Quality Floor
+
+**Required Checks Before Delivery:**
+- scope-fit: output addresses the actual user request
+- factual-consistency: no invented facts or overclaimed evidence
+- format-fit: most useful format for the task type
+
+**Evidence Policy:**
+- Factual claims must be supported, qualified, or marked as assumptions
+- Source limits must be stated when they affect trust
+
+## Working Rules
+
+- The leader owns the main context. Specialists execute bounded units only.
+- One specialist works on one bounded task at a time.
+- All intermediate specialist work flows back to the leader before final delivery.
+- When in doubt about scope, prefer a smaller bounded first pass and report the limit.
+
+---
+*Generated by CrewBee Dashboard · ${new Date().toISOString()}*
+`;
+}
+
+function syncCrewManifests(crewId: string): void {
+  try {
+    const crewFolder = join(FULL_CREWS_DIR, crewId);
+    if (!existsSync(crewFolder)) return;
+
+    const crewJsonPath = join(crewFolder, "crew.json");
+    if (!existsSync(crewJsonPath)) return;
+
+    const crewData = JSON.parse(readFileSync(crewJsonPath, "utf-8"));
+
+    // Load agents for manifest
+    const agentsFolder = join(crewFolder, "agents");
+    const agentsList: any[] = [];
+    if (existsSync(agentsFolder)) {
+      const agentDirs = readdirSync(agentsFolder, { withFileTypes: true });
+      for (const ad of agentDirs) {
+        if (ad.isDirectory()) {
+          const agentMdPath = join(agentsFolder, ad.name, "agent.md");
+          if (existsSync(agentMdPath)) {
+            const raw = readFileSync(agentMdPath, "utf-8");
+            const { frontmatter } = parseYamlFrontmatter(raw);
+            agentsList.push({ name: ad.name, ...frontmatter });
+          } else {
+            agentsList.push({ name: ad.name });
+          }
+        }
+      }
+    }
+
+    // Write TEAM.md
+    const teamMd = generateTeamMd({ ...crewData, agents: agentsList });
+    writeFileSync(join(crewFolder, "TEAM.md"), teamMd, "utf-8");
+
+    // Write AGENTS.md (policy)
+    const agentsPolicyMd = generateAgentsPolicyMd(crewData);
+    writeFileSync(join(crewFolder, "AGENTS.md"), agentsPolicyMd, "utf-8");
+
+    // Also write to ~/.config/opencode/teams/{crewId}/ for OpenCode native integration
+    const teamsFolderTarget = join(TEAMS_DIR_PATH, crewId);
+    if (!existsSync(teamsFolderTarget)) mkdirSync(teamsFolderTarget, { recursive: true });
+    writeFileSync(join(teamsFolderTarget, "TEAM.md"), teamMd, "utf-8");
+    writeFileSync(join(teamsFolderTarget, "AGENTS.md"), agentsPolicyMd, "utf-8");
+
+    console.log(`✅ [CrewBee Engine] Manifestos gerados para crew '${crewId}'`);
+  } catch (e: any) {
+    console.warn(`[CrewBee Engine] Erro ao gerar manifestos para '${crewId}':`, e.message);
+  }
+}
+
+function syncAllCrewManifests(): void {
+  try {
+    if (!existsSync(FULL_CREWS_DIR)) return;
+    const entries = readdirSync(FULL_CREWS_DIR, { withFileTypes: true });
+    for (const ent of entries) {
+      if (ent.isDirectory()) {
+        syncCrewManifests(ent.name);
+      }
+    }
+  } catch {}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SCHEDULED TASK RUNNER (Background Cron & Immediate Dispatcher)
 // ─────────────────────────────────────────────────────────────────────────────
+
 
 async function executeAgentScheduledTask(crewId: string, agentName: string, promptText?: string) {
   const agentMdPath = join(FULL_CREWS_DIR, crewId, "agents", agentName, "agent.md");
@@ -1592,6 +1944,92 @@ const server = serve({
       }
     }
 
+    // ── CrewBee Engine: Sync Manifests (TEAM.md + AGENTS.md) ──────────────────
+    if (url.pathname.match(/^\/api\/crews\/[^/]+\/sync-manifests$/) && req.method === "POST") {
+      try {
+        const crewId = url.pathname.split("/")[3];
+        syncCrewManifests(crewId);
+        return Response.json({ success: true, message: `Manifestos CrewBee atualizados para '${crewId}'` });
+      } catch (err: any) {
+        return Response.json({ error: err.message }, { status: 500 });
+      }
+    }
+
+    // ── CrewBee Engine: Sync All Crew Manifests ───────────────────────────────
+    if (url.pathname === "/api/crews/sync-all-manifests" && req.method === "POST") {
+      try {
+        syncAllCrewManifests();
+        return Response.json({ success: true, message: "Todos os manifestos CrewBee sincronizados" });
+      } catch (err: any) {
+        return Response.json({ error: err.message }, { status: 500 });
+      }
+    }
+
+    // ── CrewBee Engine: Toggle Crew in crewbee.json (OpenCode integration) ───
+    if (url.pathname.match(/^\/api\/crews\/[^/]+\/toggle-opencode$/) && req.method === "POST") {
+      try {
+        const crewId = url.pathname.split("/")[3];
+        const body = await req.json().catch(() => ({}));
+        const crewbee = getCrewBeeConfig();
+        crewbee.teams = crewbee.teams || [];
+        let idx = crewbee.teams.findIndex((t: any) => t.id === crewId || t.path === `@teams/${crewId}`);
+        if (idx === -1) {
+          crewbee.teams.push({ id: crewId, path: `@teams/${crewId}`, enabled: body.enabled ?? true, priority: crewbee.teams.length });
+          idx = crewbee.teams.length - 1;
+        } else {
+          crewbee.teams[idx].enabled = body.enabled !== undefined ? body.enabled : !crewbee.teams[idx].enabled;
+        }
+        saveCrewBeeConfig(crewbee);
+        return Response.json({ success: true, enabled: crewbee.teams[idx].enabled, crewbee });
+      } catch (err: any) {
+        return Response.json({ error: err.message }, { status: 500 });
+      }
+    }
+
+    // ── CrewBee Config: Get / Update crewbee.json ─────────────────────────────
+    if (url.pathname === "/api/opencode/crewbee-config" && req.method === "GET") {
+      return Response.json(getCrewBeeConfig());
+    }
+
+    if (url.pathname === "/api/opencode/crewbee-config" && req.method === "PATCH") {
+      try {
+        const body = await req.json();
+        const crewbee = getCrewBeeConfig();
+        const merged = { ...crewbee, ...body };
+        saveCrewBeeConfig(merged);
+        return Response.json({ success: true, config: merged });
+      } catch (err: any) {
+        return Response.json({ error: err.message }, { status: 400 });
+      }
+    }
+
+    // ── Scheduled Runs History ────────────────────────────────────────────────
+    if (url.pathname === "/api/scheduled-runs" && req.method === "GET") {
+      const runs: any[] = [];
+      try {
+        const crews = getFullCrews();
+        for (const crew of crews) {
+          for (const agent of crew.agents) {
+            if (agent.schedule?.last_run) {
+              runs.push({
+                crewId: crew.id,
+                crewName: crew.name,
+                agentName: agent.name,
+                lastRun: agent.schedule.last_run,
+                nextRun: agent.schedule.next_run,
+                status: agent.schedule.status,
+                frequency: agent.schedule.frequency,
+                taskPrompt: agent.schedule.task_prompt
+              });
+            }
+          }
+        }
+      } catch {}
+      return Response.json({ runs: runs.sort((a, b) => new Date(b.lastRun).getTime() - new Date(a.lastRun).getTime()) });
+    }
+
+
+
     // Save Agent inside Crew
     if (url.pathname.match(/^\/api\/crews\/[^/]+\/agents$/) && req.method === "POST") {
       try {
@@ -2124,3 +2562,12 @@ ${body.prompt || `# @${cleanName}\n\nInstruções especializadas do agente custo
 
 console.log(`✨ OpenCode Master Dashboard rodando em http://localhost:${PORT}`);
 console.log(`📁 Full Crews Workspace Ativo em: ${FULL_CREWS_DIR}`);
+
+// ── Boot: CrewBee Engine — Sincronizar todos os manifestos ao iniciar ─────────
+try {
+  if (!existsSync(TEAMS_DIR_PATH)) mkdirSync(TEAMS_DIR_PATH, { recursive: true });
+  syncAllCrewManifests();
+  console.log("🐝 [CrewBee Engine] Manifestos TEAM.md + AGENTS.md sincronizados para todas as crews");
+} catch (e: any) {
+  console.warn("⚠️  [CrewBee Engine] Erro ao sincronizar manifestos na inicialização:", e.message);
+}

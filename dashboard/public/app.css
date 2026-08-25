@@ -1298,7 +1298,9 @@ html, body {
   width: 100%;
   max-width: 600px;
   max-height: 90vh;
+  /* Scroll somente aqui, nunca nos filhos via overflow:hidden */
   overflow-y: auto;
+  overscroll-behavior: contain;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(15, 23, 42, 0.52);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-top: 1.5px solid rgba(255, 255, 255, 0.42);
@@ -1308,13 +1310,18 @@ html, body {
   border-radius: 22px;
   box-shadow: 0 30px 90px -15px rgba(0, 0, 0, 0.75), 0 0 45px rgba(168, 85, 247, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.25);
   color: #ffffff;
+  /* Forçar layer de compositing para corrigir stacking context do backdrop-filter */
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .modal-card.modal-large {
   max-width: 720px;
 }
 
-/* WORKSTATION FULLSCREEN MODAL (PREMIUM STUDIO WORKSPACE) */
+/* WORKSTATION FULLSCREEN MODAL (PREMIUM STUDIO WORKSPACE)
+ * IMPORTANTE: overflow:hidden no wrapper + overflow-y:auto APENAS no .workstation-body-grid
+ * Isso evita o bug onde elementos somem ao rolar (backdrop-filter cria stacking context local) */
 .modal-card.modal-fullscreen-workstation {
   width: 95vw;
   max-width: 1440px;
@@ -1322,17 +1329,33 @@ html, body {
   max-height: 940px;
   display: flex;
   flex-direction: column;
-  padding: 22px 26px;
+  padding: 0;
   border-radius: 24px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(20, 25, 45, 0.94) 100%), rgba(11, 15, 28, 0.98);
-  backdrop-filter: blur(35px) saturate(210%);
-  -webkit-backdrop-filter: blur(35px) saturate(210%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-top: 1.5px solid rgba(255, 255, 255, 0.38);
-  box-shadow: 0 40px 120px -20px rgba(0, 0, 0, 0.85), 0 0 50px rgba(129, 140, 248, 0.18);
-  overflow: hidden;
+  /* Gradient sem backdrop-filter para evitar stacking context que quebra z-index filhos */
+  background: linear-gradient(150deg, rgba(22, 27, 58, 0.99) 0%, rgba(11, 15, 35, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.32);
+  box-shadow: 0 40px 120px -20px rgba(0, 0, 0, 0.9), 0 0 60px rgba(129, 140, 248, 0.15);
+  /* Não usar overflow:hidden aqui — usa clip-path para manter bordas arredondadas */
+  overflow: visible;
+  /* Layer de compositing isolado */
+  will-change: transform;
+  contain: layout style;
 }
 
+/* Workstation header fixo no topo */
+.workstation-modal-header {
+  padding: 18px 26px 0 26px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  background: rgba(11, 15, 35, 0.6);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: 14px;
+  border-radius: 24px 24px 0 0;
+}
+
+/* Area scrollável: só este elemento faz scroll */
 .workstation-body-grid {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
@@ -1340,19 +1363,25 @@ html, body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 8px;
-  margin-top: 6px;
-  margin-bottom: 8px;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding: 18px 26px 18px 26px;
+  /* Layer GPU dedicado para evitar repaint de elementos ao rolar */
+  will-change: scroll-position;
+  transform: translateZ(0);
+  -webkit-overflow-scrolling: touch;
 }
 
 .workstation-column {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  /* Sem overflow — o grid já gerencia */
+  min-width: 0;
 }
 
 .workstation-body-grid::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .workstation-body-grid::-webkit-scrollbar-track {
@@ -1361,12 +1390,143 @@ html, body {
 }
 
 .workstation-body-grid::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.14);
   border-radius: 4px;
 }
 
 .workstation-body-grid::-webkit-scrollbar-thumb:hover {
-  background: rgba(168, 85, 247, 0.4);
+  background: rgba(168, 85, 247, 0.5);
+}
+
+/* Footer fixo */
+.workstation-modal-footer {
+  padding: 14px 26px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(11, 15, 35, 0.6);
+  border-radius: 0 0 24px 24px;
+  gap: 10px;
+}
+
+/* Seção collapsível estilo CrewBee */
+.crewbee-section {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.crewbee-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  gap: 8px;
+  transition: background 0.15s;
+}
+
+.crewbee-section-header:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+.crewbee-section-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crewbee-section-title .cb-icon {
+  font-size: 13px;
+}
+
+.crewbee-section-toggle {
+  font-size: 11px;
+  color: var(--text-dim);
+  transition: transform 0.2s;
+}
+
+.crewbee-section.is-open .crewbee-section-toggle {
+  transform: rotate(180deg);
+}
+
+.crewbee-section-body {
+  padding: 0 14px 14px 14px;
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.crewbee-section.is-open .crewbee-section-body {
+  display: flex;
+}
+
+/* Tag badge de origem CrewBee */
+.cb-tag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.cb-tag-crewbee {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.cb-tag-slim {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+/* Status do OpenCode integration */
+.opencode-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.opencode-status-badge.is-active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.opencode-status-badge.is-inactive {
+  background: rgba(107, 114, 128, 0.12);
+  color: var(--text-dim);
+  border: 1px solid rgba(107, 114, 128, 0.25);
+}
+
+.opencode-status-badge:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
 }
 
 /* SKILL PICKER CARDS (STYLE OMNIROUTE MODEL PICKER) */
