@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # ==============================================================================
-# 🔮 Translucid Suite — Aplicador Completo (OpenCode + OmniRoute + Pro Fonts)
+# 🔮 Translucid Suite — Aplicador Completo (OpenWork + OpenCode + OmniRoute + Pro Fonts)
 # ==============================================================================
 
 set -e
@@ -10,13 +10,24 @@ echo "════════════════════════�
 echo "        💎 TRANSLUCID SUITE — ULTRA-LIGHT LIQUID GLASS INJECTOR           "
 echo "═══════════════════════════════════════════════════════════════════════════"
 
-echo "\n🔤 [Passo 1/3] Verificando e Instalando Fontes Profissionais..."
+echo "\n🔤 [Passo 1/4] Verificando e Instalando Fontes Profissionais..."
 "${SCRIPT_DIR}/install-pro-fonts.sh"
 
-echo "\n🪟 [Passo 2/3] Aplicando Liquid Glass no OpenCode Desktop..."
-"${SCRIPT_DIR}/apply-translucid.sh"
+echo "\n🪟 [Passo 2/4] Aplicando Liquid Glass no OpenWork Desktop..."
+if [ -d "/Applications/OpenWork.app" ]; then
+    "${SCRIPT_DIR}/apply-translucid-openwork.sh"
+else
+    echo "ℹ️ OpenWork.app não instalado em /Applications, pulando..."
+fi
 
-echo "\n⚡ [Passo 3/3] Aplicando Liquid Glass no OmniRoute Desktop..."
+echo "\n🪟 [Passo 3/4] Aplicando Liquid Glass no OpenCode Desktop..."
+if [ -d "/Applications/OpenCode.app" ]; then
+    "${SCRIPT_DIR}/apply-translucid.sh"
+else
+    echo "ℹ️ OpenCode.app não instalado em /Applications, pulando..."
+fi
+
+echo "\n⚡ [Passo 4/4] Aplicando Liquid Glass no OmniRoute Desktop..."
 if [ -d "/Applications/OmniRoute.app" ]; then
     "${SCRIPT_DIR}/apply-translucid-omniroute.sh"
 else

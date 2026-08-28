@@ -1,84 +1,87 @@
-# 🪟✨ Translucid OpenCode & Control Center Suite
+# ✨ Translucid OpenCode — Apple Liquid Glass & Radiant Energy Engine
 
-> Ecossistema definitivo de personalização visual **Liquid Glass (Transparência Nativa Apple Vibrancy)**, aceleração por hardware **120 FPS ProMotion**, tipografia profissional e **Centro de Controle Multi-Agente (Full Crews & Governança Executiva)** para o **OpenCode Desktop (macOS)**.
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform: macOS](https://img.shields.io/badge/Platform-macOS%20(Apple%20Silicon%20%26%20Intel)-black.svg)](https://apple.com)
-[![Electron: Native Glass](https://img.shields.io/badge/Electron-Vibrancy%20%26%20Alpha-emerald.svg)](https://electronjs.org)
-[![Display: 120 FPS](https://img.shields.io/badge/ProMotion-120%20FPS%20Metal-purple.svg)](https://apple.com)
-[![Dashboard: Port 3030](https://img.shields.io/badge/Control%20Center-Port%203030-indigo.svg)](http://localhost:3030)
+> **A personalização visual definitiva e oficial para o [OpenCode](https://opencode.ai) no macOS, combinando vidro líquido translúcido nativo estilo Apple Vibrancy com um Motor de Efeitos de Energia em Tempo Real a 120 FPS.**
 
 ---
 
-## 📖 Visão Geral
+## 🌟 O que Há de Novo (Versão Final Consolidada)
 
-O **Translucid OpenCode** transforma o OpenCode Desktop em uma estação de trabalho futurista de vidro translúcido com orquestração multi-agente completa:
-
-1. **Pure Liquid Glass (NSVisualEffectView)**: Desbloqueia o canal Alpha nativo do macOS (`vibrancy: "under-window"`, `transparent: true`, `opacity: 0.94`), eliminando os fundos escuros opacos de fábrica.
-2. **Alto Contraste & Tipografia Pro**: Textos em branco puro reluzente com micro-sombras ópticas e fontes profissionais com ligaduras (`SF Pro Display`, `Fira Code`, `JetBrainsMono Nerd Font`).
-3. **Botão de Dashboard Integrado**: Botão nativo na barra de título do OpenCode para abrir o painel de controle com apenas 1 clique em [`http://localhost:3030/`](http://localhost:3030/).
-4. **Governança Global com @presidente**: Orquestrador supremo executivo para gerenciar equipes, despachar objetivos paralelos e delegar aos líderes de squad.
-5. **Arquitetura Full Crews & Skills**: Motor de equipes sob medida, instruções em Markdown (`SKILL.md`, `agent.md`), agendamento de tarefas e telemetria em tempo real.
-6. **Resiliência a Formatação (Snapshot Master)**: Script único que restaura 100% de todo o ecossistema (skills, agentes, temas, configs, vidro e dashboard) em qualquer Mac recém-formatado.
+- 💎 **Apple Vibrancy Nativo (GPU Metal)**: Janela 100% translúcida integrada ao sistema operacional com desfoque profundo (*backdrop-filter: blur*).
+- 🌅 **Deep Horizon Radiant**: Nébula profunda amplificada na base da janela com feixes e raios volumétricos de luz irradiando para cima.
+- ✨ **Celestial Radiance**: Fonte de luz estática no canto superior direito irradiando raios cósmicos descendentes pela interface.
+- 🌋 **Plasma Lava (Orbs)**: Duas massas fluidas de plasma com gradientes puros e curvas bezier harmônicas.
+- ⚡ **Cyber Neon Pulse**: Feixes perimetrais de laser e pulso neon com vibração eletromagnética.
+- 🌊 **Aurora Liquid Waves**: Ondas orgânicas ondulantes estilo Aurora Boreal no topo e laterais.
+- 💎 **Pure Crystal Glass**: Vidro cristal 100% limpo e minimalista sem efeitos de luz adicionais.
+- 🎨 **Custom Color Engine**: Seletores nativos RGB/Hex para **Luz Principal**, **Luz Secundária** e **Destaque (Accent)**, com 6 paletas rápidas e compatibilidade total com os **37 temas nativos do OpenCode**.
+- 🔄 **Sincronização em Tempo Real (Solid.js)**: Troca instantânea sem recarregar o app, com sincronização bidirecional via `opencode-theme-id` e `MutationObserver`.
 
 ---
 
-## 🚀 Instalação em Novo Mac / Após Formatar
+## 🚀 Como Aplicar em 1 Clique (Instalação ou Pós-Atualização)
 
-Após baixar e instalar o **OpenCode Desktop**, basta clonar este repositório e rodar o instalador mestre:
+Sempre que o OpenCode for atualizado, reinstalado ou o computador formatado, basta abrir o terminal nesta pasta e executar:
 
 ```bash
-# 1. Clone o repositório
-git clone https://github.com/MateusCelestinoProX/translucid-open-code.git
-cd translucid-open-code
-
-# 2. Execute a instalação e restauração completa em 1 comando:
-./setup-after-format.sh
+chmod +x apply-translucid.sh
+./apply-translucid.sh
 ```
 
-O script automaticamente:
-- Cria toda a estrutura de pastas em `~/.config/opencode/` e `Documents/Default Project/full crews/`.
-- Restaura configurações, temas, comandos, skills e o `@presidente`.
-- Instala as fontes profissionais no sistema macOS.
-- Injeta o Liquid Glass e o botão nativo do Dashboard no OpenCode Desktop.
-- Aplica o efeito no OmniRoute Desktop (se instalado).
+### O que o instalador faz de ponta a ponta:
+1. **Geração do Motor Visual**: Compila o motor JavaScript limpo com validação de sintaxe na VM.
+2. **Backup de Segurança**: Preserva o arquivo `app.asar.backup` original caso precise reverter.
+3. **Injeção do Liquid Glass & Apple Vibrancy**: Aplica transparência de alta performance na camada de renderização e no processo principal do Electron.
+4. **Reempacotamento**: Empacota o novo `app.asar`.
+5. **Assinatura & Gatekeeper**: Remove a quarentena do macOS e aplica assinatura ad-hoc válida.
+6. **Reinicialização Imediata**: Inicia o OpenCode com toda a estética ativa.
 
 ---
 
-## 📊 Como Iniciar o Dashboard de Controle
+## ⌨️ Como Usar no OpenCode
 
-Para abrir o painel web de telemetria, equipes e skills:
+1. **Botões na Barra Superior**: Clique no botão **Efeitos** ou **Dashboard** na barra de títulos.
+2. **Atalho Global de Teclado**: Pressione <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>T</kbd> (ou <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd>) em qualquer tela para abrir/fechar o painel de efeitos.
+3. **Controles Finos**:
+   - Ajuste o slider de **Glow / Brilho** (15% a 95%).
+   - Alterne a **Velocidade** (🐢 Calmo, ⚡ Fluido, 🚀 Rápido, ⚡⚡ Turbo).
+   - Escolha entre **37 Temas Presets** ou use a aba **Cores Personalizadas**.
+
+---
+
+## 📊 Dashboard de Controle Local
+
+Para rodar a central de monitoramento visual:
 
 ```bash
+chmod +x start-dashboard.sh
 ./start-dashboard.sh
 ```
-Acesse no seu navegador: **[`http://localhost:3030/`](http://localhost:3030/)**
+Acesse no seu navegador: **[http://localhost:3030/](http://localhost:3030/)**
 
 ---
 
-## 📦 Snapshot e Backup do Estado Ativo
+## 🔄 Restaurar Original
 
-Se você criar novas skills ou modificar configurações e quiser salvar tudo no repositório para subir ao Git:
+Para reverter para o visual padrão do OpenCode a qualquer momento:
 
 ```bash
-./backup-current-state.sh
-git add .
-git commit -m "feat: snapshot atualizado do ecossistema"
-git push
+chmod +x restore-original.sh
+./restore-original.sh
 ```
 
 ---
 
-## 🔄 Como Restaurar para o Padrão de Fábrica
+## 🔤 Fontes Profissionais Recomendadas
 
-Se desejar remover os efeitos translúcidos e retornar ao OpenCode original:
+Para instalar fontes para programação (*JetBrains Mono*, *Fira Code*, *SF Pro*, *Inter*):
 
 ```bash
-./restore-original.sh
+chmod +x install-pro-fonts.sh
+./install-pro-fonts.sh
 ```
 
 ---
 
 ## 📄 Licença
 
-Distribuído sob a licença [MIT](LICENSE). Desenvolvido para personalização visual e orquestração de IA de alto nível.
+Distribuído sob a licença MIT. Veja `LICENSE` para mais detalhes.

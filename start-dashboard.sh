@@ -1,12 +1,12 @@
 #!/usr/bin/env zsh
 # ==============================================================================
-# 📊 Start OpenCode Dashboard (http://localhost:3030/)
+# 📊 Start Translucid Control Center & Dashboard (http://localhost:3030/)
 # ==============================================================================
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-echo "🚀 Iniciando OpenCode Dashboard em http://localhost:3030/..."
+echo "🚀 Iniciando Translucid Control Center Suite em http://localhost:3030/..."
 cd "${SCRIPT_DIR}/dashboard"
 
 if command -v bun &> /dev/null; then
